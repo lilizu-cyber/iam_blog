@@ -1,0 +1,91 @@
+name: Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        type: choice
+        options:
+          - staging
+          - production
+      run_migrations:
+        description: 'Run database migrations before deployment?'
+        required: true
+        type: boolean
+        default: true
+
+jobs:
+  deploy:
+    name: Deploy to ${{ inputs.environment }}
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Run database migrations
+        if: inputs.run_migrations
+        env:
+          POSTGRESQL_URI: ${{ secrets[format('POSTGRESQL_URI_{0}', inputs.environment)] }}
+          NODE_ENV: ${{ inputs.environment }}
+        run: |
+          echo "Running migrations for ${{ inputs.environment }}..."
+          npm run migrate:up
+      
+      - name: Build application
+        run: |
+          npm run build:backend
+          cd frontend && npm ci && npm run build
+      
+      - name: Deploy to server
+        # This step depends on your deployment method
+        # Examples: SSH, Docker, Cloud Platform, etc.
+        run: |
+          echo "Deployment steps would go here"
+          echo "Environment: ${{ inputs.environment }}"
+          echo ""
+          echo "Example deployment methods:"
+          echo "1. SSH deployment:"
+          echo "   - Copy files to server"
+          echo "   - Restart services"
+          echo ""
+          echo "2. Docker deployment:"
+          echo "   - Build Docker image"
+          echo "   - Push to registry"
+          echo "   - Deploy to container platform"
+          echo ""
+          echo "3. Cloud platform (Vercel, Netlify, etc.):"
+          echo "   - Use platform-specific deployment actions"
+      
+      # Uncomment and configure based on your deployment method:
+      # - name: Deploy via SSH
+      #   uses: appleboy/ssh-action@master
+      #   with:
+      #     host: ${{ secrets.SSH_HOST }}
+      #     username: ${{ secrets.SSH_USERNAME }}
+      #     key: ${{ secrets.SSH_PRIVATE_KEY }}
+      #     script: |
+      #       cd /path/to/app
+      #       git pull
+      #       npm install --production
+      #       npm run migrate:up
+      #       pm2 restart iam-blog
+      
+      # - name: Deploy to Docker
+      #   run: |
+      #     docker build -t iam-blog:${{ github.sha }} .
+      #     docker push iam-blog:${{ github.sha }}
+      #     # Deploy to your container platform
+

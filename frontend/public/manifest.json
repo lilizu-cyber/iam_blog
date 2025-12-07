@@ -1,0 +1,50 @@
+{
+  "name": "IAM Cybersecurity Blog",
+  "short_name": "IAM Blog",
+  "description": "Identity and Access Management Cybersecurity Blog",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0ea5e9",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/images/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/images/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["education", "technology", "security"],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Blog",
+      "short_name": "Blog",
+      "description": "View all blog posts",
+      "url": "/blog",
+      "icons": [{ "src": "/images/icon-192x192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Security Posts",
+      "short_name": "Security",
+      "description": "View security-related posts",
+      "url": "/security",
+      "icons": [{ "src": "/images/icon-192x192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "IAM Posts",
+      "short_name": "IAM",
+      "description": "View IAM-related posts",
+      "url": "/iam",
+      "icons": [{ "src": "/images/icon-192x192.png", "sizes": "192x192" }]
+    }
+  ]
+}
+

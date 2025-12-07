@@ -1,0 +1,93 @@
+name: Database Migrations
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to run migrations on'
+        required: true
+        type: choice
+        options:
+          - staging
+          - production
+      confirm:
+        description: 'Type "yes" to confirm'
+        required: true
+        type: string
+
+jobs:
+  check-migration-status:
+    name: Check Migration Status
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Check migration status
+        env:
+          POSTGRESQL_URI: ${{ secrets[format('POSTGRESQL_URI_{0}', inputs.environment)] }}
+          NODE_ENV: ${{ inputs.environment }}
+        run: |
+          if [ "${{ inputs.confirm }}" != "yes" ]; then
+            echo "❌ Confirmation required. Type 'yes' to proceed."
+            exit 1
+          fi
+          echo "Checking migration status for ${{ inputs.environment }}..."
+          npm run migrate:status || echo "Migration status check completed"
+
+  run-migrations:
+    name: Run Database Migrations
+    needs: check-migration-status
+    runs-on: ubuntu-latest
+    if: github.event.inputs.confirm == 'yes'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Run migrations
+        env:
+          POSTGRESQL_URI: ${{ secrets[format('POSTGRESQL_URI_{0}', inputs.environment)] }}
+          NODE_ENV: ${{ inputs.environment }}
+        run: |
+          echo "Running migrations for ${{ inputs.environment }}..."
+          npm run migrate:up
+      
+      - name: Verify migration status
+        env:
+          POSTGRESQL_URI: ${{ secrets[format('POSTGRESQL_URI_{0}', inputs.environment)] }}
+          NODE_ENV: ${{ inputs.environment }}
+        run: |
+          echo "Verifying migration status..."
+          npm run migrate:status
+      
+      - name: Notify on success
+        if: success()
+        run: |
+          echo "✅ Migrations completed successfully for ${{ inputs.environment }}"
+      
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "❌ Migration failed for ${{ inputs.environment }}"
+          exit 1
+

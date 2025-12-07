@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0ea5e9" />
+    <title>CyberSec & IAM Blog - Security Insights & Identity Management</title>
+    <meta name="description" content="Explore the latest in cybersecurity, identity and access management (IAM), and AI-powered security solutions. Expert insights, tutorials, and industry trends." />
+    <meta name="keywords" content="cybersecurity, IAM, identity management, access control, security, AI security, authentication, authorization" />
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://cybersec-iam-blog.com/" />
+    <meta property="og:title" content="CyberSec & IAM Blog - Security Insights & Identity Management" />
+    <meta property="og:description" content="Explore the latest in cybersecurity, identity and access management (IAM), and AI-powered security solutions." />
+    <meta property="og:image" content="/og-image.jpg" />
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content="https://cybersec-iam-blog.com/" />
+    <meta property="twitter:title" content="CyberSec & IAM Blog - Security Insights & Identity Management" />
+    <meta property="twitter:description" content="Explore the latest in cybersecurity, identity and access management (IAM), and AI-powered security solutions." />
+    <meta property="twitter:image" content="/og-image.jpg" />
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Theme -->
+    <script>
+      // Check for saved theme preference or default to 'light'
+      const theme = localStorage.getItem('theme') || 'light';
+      if (theme === 'dark') {
+        document.documentElement.classList.add('dark');
+      }
+    </script>
+  </head>
+  <body class="bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-200">
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+    <script>
+      // Register service worker
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then((registration) => {
+              console.log('Service Worker registered:', registration.scope);
+            })
+            .catch((error) => {
+              console.log('Service Worker registration failed:', error);
+            });
+        });
+      }
+    </script>
+  </body>
+</html>
