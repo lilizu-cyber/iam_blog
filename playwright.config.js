@@ -60,20 +60,22 @@ module.exports = defineConfig({
   ],
 
   /* Run your local dev server before starting the tests */
-  webServer: [
+  /* Disabled in CI - servers are started manually in GitHub Actions */
+  webServer: process.env.CI ? undefined : [
     {
       command: 'npm run dev:backend',
       url: 'http://localhost:3001/health',
-      reuseExistingServer: !process.env.CI,
+      reuseExistingServer: true,
       timeout: 120 * 1000,
     },
     {
       command: 'cd frontend && npm start',
       url: 'http://localhost:3000',
-      reuseExistingServer: !process.env.CI,
+      reuseExistingServer: true,
       timeout: 120 * 1000,
     },
   ],
 });
+
 
 
