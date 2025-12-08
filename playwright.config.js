@@ -17,7 +17,7 @@ module.exports = defineConfig({
   workers: process.env.CI ? 1 : undefined,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: [
-    ['html'],
+    ['html', { outputFolder: 'playwright-report' }],
     ['list'],
     process.env.CI ? ['github'] : null
   ].filter(Boolean),
