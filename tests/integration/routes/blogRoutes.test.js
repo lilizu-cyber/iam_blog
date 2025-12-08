@@ -239,11 +239,12 @@ describe('Blog Routes', () => {
       expect(response.status).toBe(200);
       expect(queryBus.execute).toHaveBeenCalledWith(
         expect.objectContaining({
-          type: 'GetSecurityRelatedPosts'
+          type: 'GetSecurityBlogPosts'
         })
       );
     });
   });
 });
+
 
 

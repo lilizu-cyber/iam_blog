@@ -1,29 +1,40 @@
 const request = require('supertest');
 const express = require('express');
+const cookieParser = require('cookie-parser');
 const authRoutes = require('../../../src/backend/api/routes/authRoutes');
 const { mockReadModelStore } = require('../../helpers/mocks');
 
 // Mock rate limiter
 jest.mock('../../../src/backend/middleware/rateLimiter', () => ({
   authLimiter: (req, res, next) => next(),
-  generalLimiter: (req, res, next) => next()
+  generalLimiter: (req, res, next) => next(),
+  strictLimiter: (req, res, next) => next()
 }));
+
+// Mock User model
+const mockUserModel = {
+  findOne: jest.fn(),
+  findByPk: jest.fn(),
+  sync: jest.fn()
+};
+
+jest.mock('../../../src/backend/models/User', () => mockUserModel);
 
 describe('Auth Routes', () => {
   let app;
-  let readModelStore;
 
   beforeEach(() => {
     app = express();
     app.use(express.json());
     app.use(express.urlencoded({ extended: true }));
+    app.use(cookieParser());
     
-    readModelStore = { ...mockReadModelStore };
-    
-    app.use('/api/auth', authRoutes(readModelStore));
+    app.use('/api/auth', authRoutes());
     
     // Reset mocks
     jest.clearAllMocks();
+    mockUserModel.findOne.mockReset();
+    mockUserModel.findByPk.mockReset();
   });
 
   describe('POST /api/auth/login', () => {
@@ -38,10 +49,7 @@ describe('Auth Routes', () => {
 
     it('should return 401 for invalid credentials', async () => {
       // Mock User model to return null (user not found)
-      const mockUserModel = {
-        findOne: jest.fn().mockResolvedValue(null)
-      };
-      readModelStore.getModel = jest.fn().mockReturnValue(mockUserModel);
+      mockUserModel.findOne.mockResolvedValue(null);
 
       const response = await request(app)
         .post('/api/auth/login')
@@ -52,6 +60,12 @@ describe('Auth Routes', () => {
 
       expect(response.status).toBe(401);
       expect(response.body.success).toBe(false);
+      expect(mockUserModel.findOne).toHaveBeenCalledWith({
+        where: {
+          username: 'invalid',
+          isActive: true
+        }
+      });
     });
   });
 
@@ -88,5 +102,6 @@ describe('Auth Routes', () => {
     });
   });
 });
+
 
 
