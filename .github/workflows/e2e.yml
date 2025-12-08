@@ -51,8 +51,9 @@ jobs:
     - name: Install frontend dependencies
       run: |
         cd frontend
+        echo "Installing frontend dependencies..."
         npm ci
-        echo "Frontend dependencies installed successfully"
+        echo "✅ Frontend dependencies installed successfully"
 
     - name: Install Playwright Browsers
       run: npx playwright install --with-deps
