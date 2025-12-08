@@ -213,7 +213,9 @@ jobs:
       - name: Build frontend
         run: |
           cd frontend
-          npm ci
+          # Use npm install to ensure optional dependencies (Rollup native modules) are installed
+          # npm ci sometimes skips optional dependencies due to npm bug
+          npm install
           npm run build
       
       - name: Start frontend server

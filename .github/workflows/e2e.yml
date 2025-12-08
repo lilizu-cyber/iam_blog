@@ -52,7 +52,9 @@ jobs:
       run: |
         cd frontend
         echo "Installing frontend dependencies..."
-        npm ci
+        # Use npm install to ensure optional dependencies (Rollup native modules) are installed
+        # npm ci sometimes skips optional dependencies due to npm bug
+        npm install
         echo "✅ Frontend dependencies installed successfully"
 
     - name: Install Playwright Browsers

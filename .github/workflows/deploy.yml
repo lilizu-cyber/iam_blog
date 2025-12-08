@@ -47,7 +47,11 @@ jobs:
       - name: Build application
         run: |
           npm run build:backend
-          cd frontend && npm ci && npm run build
+          cd frontend
+          # Use npm install to ensure optional dependencies (Rollup native modules) are installed
+          # npm ci sometimes skips optional dependencies due to npm bug
+          npm install
+          npm run build
       
       - name: Deploy to server
         # This step depends on your deployment method
@@ -88,5 +92,6 @@ jobs:
       #     docker build -t iam-blog:${{ github.sha }} .
       #     docker push iam-blog:${{ github.sha }}
       #     # Deploy to your container platform
+
 
 
