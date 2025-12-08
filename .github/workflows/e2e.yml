@@ -71,6 +71,23 @@ jobs:
     - name: Build frontend
       run: cd frontend && npm run build
 
+    - name: Create .env file for backend
+      env:
+        POSTGRESQL_URI: postgresql://postgres:postgres@localhost:5432/iam_blog_db
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/iam_blog_db
+        JWT_SECRET: test-jwt-secret-key-for-testing-only-minimum-32-characters-long
+        REDIS_URL: redis://localhost:6379
+        NODE_ENV: test
+      run: |
+        cat > .env << EOF
+        POSTGRESQL_URI=postgresql://postgres:postgres@localhost:5432/iam_blog_db
+        DATABASE_URL=postgresql://postgres:postgres@localhost:5432/iam_blog_db
+        JWT_SECRET=test-jwt-secret-key-for-testing-only-minimum-32-characters-long
+        REDIS_URL=redis://localhost:6379
+        NODE_ENV=test
+        PORT=3001
+        EOF
+
     - name: Start backend server
       env:
         POSTGRESQL_URI: postgresql://postgres:postgres@localhost:5432/iam_blog_db
