@@ -46,33 +46,80 @@ function initializeRedis() {
         }
       });
       
-      // Only log errors once
+      // Handle Redis connection events
       let errorLogged = false;
+      let connectionTimeout;
+      
       redisClient.on('error', (err) => {
-        if (!errorLogged && !redisConnectionFailed) {
-          logger.warn('Redis connection error, using memory store for rate limiting:', err.message);
-          errorLogged = true;
+        // Don't mark as failed for transient errors (network issues, etc.)
+        // Only mark as failed for authentication or configuration errors
+        const isFatalError = err.message.includes('NOAUTH') || 
+                            err.message.includes('WRONGPASS') ||
+                            err.message.includes('invalid') ||
+                            err.code === 'ENOTFOUND';
+        
+        if (isFatalError && !redisConnectionFailed) {
+          logger.warn('Redis fatal error, using memory store for rate limiting:', err.message);
           redisConnectionFailed = true;
+        } else if (!errorLogged && !redisConnectionFailed) {
+          logger.debug('Redis connection error (will retry):', err.message);
+          errorLogged = true;
         }
       });
       
       redisClient.on('connect', () => {
-        logger.info('Redis connected for rate limiting');
+        logger.debug('Redis connecting...');
         redisConnectionFailed = false;
+        errorLogged = false;
       });
       
       redisClient.on('ready', () => {
         logger.info('Redis ready for rate limiting');
         redisConnectionFailed = false;
+        errorLogged = false;
+        if (connectionTimeout) {
+          clearTimeout(connectionTimeout);
+          connectionTimeout = null;
+        }
+      });
+      
+      redisClient.on('reconnecting', () => {
+        logger.debug('Redis reconnecting...');
+        redisConnectionFailed = false;
+      });
+      
+      redisClient.on('end', () => {
+        logger.debug('Redis connection ended');
+        // Don't mark as failed on disconnect, allow reconnection
       });
       
       // Connect to Redis (non-blocking, don't wait)
-      redisClient.connect().catch((err) => {
-        if (!redisConnectionFailed) {
-          logger.warn('Redis connection failed, using memory store for rate limiting:', err.message);
-          redisConnectionFailed = true;
+      connectionTimeout = setTimeout(() => {
+        // If not ready after 10 seconds, mark as failed but don't stop reconnection attempts
+        if (redisClient && !redisClient.isReady && !redisConnectionFailed) {
+          logger.warn('Redis connection taking longer than expected, using memory store temporarily');
         }
-        redisClient = null;
+      }, 10000);
+      
+      redisClient.connect().catch((err) => {
+        if (connectionTimeout) {
+          clearTimeout(connectionTimeout);
+          connectionTimeout = null;
+        }
+        
+        // Only mark as failed for fatal errors
+        const isFatalError = err.message.includes('NOAUTH') || 
+                            err.message.includes('WRONGPASS') ||
+                            err.message.includes('invalid') ||
+                            err.code === 'ENOTFOUND';
+        
+        if (isFatalError && !redisConnectionFailed) {
+          logger.warn('Redis connection failed (fatal error), using memory store for rate limiting:', err.message);
+          redisConnectionFailed = true;
+        } else if (!redisConnectionFailed) {
+          logger.debug('Redis initial connection failed (will retry):', err.message);
+          // Don't set redisClient to null, allow reconnection attempts
+        }
       });
     } catch (error) {
       if (!redisConnectionFailed) {
@@ -109,7 +156,17 @@ function createRateLimiter(options) {
   // Only try to use Redis if it's available and not failed
   if (redisClient && RedisStore && !redisConnectionFailed) {
     // Check if Redis client is ready (connected)
-    const isReady = redisClient.isReady || (redisClient.status === 'ready');
+    // Support multiple ways to check readiness for different Redis client versions
+    let isReady = false;
+    try {
+      isReady = redisClient.isReady === true || 
+                redisClient.status === 'ready' ||
+                (typeof redisClient.isOpen === 'function' && redisClient.isOpen()) ||
+                (redisClient.connector && redisClient.connector.status === 'ready');
+    } catch (checkError) {
+      // If checking readiness throws, assume not ready
+      isReady = false;
+    }
     
     if (isReady) {
       try {
@@ -124,12 +181,13 @@ function createRateLimiter(options) {
           createRateLimiter._redisLogged = true;
         }
       } catch (error) {
-        if (!redisConnectionFailed) {
-          logger.warn('Failed to create Redis store, using memory store:', error.message);
-          redisConnectionFailed = true;
-        }
+        // Don't mark as failed for store creation errors, might be temporary
+        logger.debug('Failed to create Redis store, using memory store:', error.message);
         store = undefined;
       }
+    } else {
+      // Redis not ready yet, use memory store but don't log (too verbose)
+      store = undefined;
     }
   }
   

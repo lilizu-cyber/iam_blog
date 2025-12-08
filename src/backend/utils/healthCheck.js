@@ -114,42 +114,69 @@ class HealthChecker {
         };
       }
 
-      // Check if Redis client is ready
-      if (this.redisClient.isReady !== undefined) {
-        if (!this.redisClient.isReady) {
-          return {
-            status: 'unhealthy',
-            error: 'Redis client not ready',
-            responseTime: Date.now() - startTime
-          };
-        }
+      // Check if Redis client is ready (support multiple ways to check)
+      let isReady = false;
+      try {
+        isReady = this.redisClient.isReady === true || 
+                  this.redisClient.status === 'ready' ||
+                  (typeof this.redisClient.isOpen === 'function' && this.redisClient.isOpen()) ||
+                  (this.redisClient.connector && this.redisClient.connector.status === 'ready');
+      } catch (checkError) {
+        // If checking readiness throws, assume not ready
+        isReady = false;
       }
 
-      // Test Redis connection with PING command
-      const result = await this.redisClient.ping();
+      if (!isReady) {
+        return {
+          status: 'degraded',
+          message: 'Redis client not ready (reconnecting)',
+          responseTime: Date.now() - startTime
+        };
+      }
+
+      // Test Redis connection with PING command (with timeout)
+      const pingPromise = this.redisClient.ping();
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Redis PING timeout')), 2000)
+      );
+      
+      const result = await Promise.race([pingPromise, timeoutPromise]);
       
       if (result === 'PONG') {
-        // Get Redis info
-        const info = await this.redisClient.info('server');
-        const versionMatch = info.match(/redis_version:([^\r\n]+)/);
+        // Get Redis info (optional, don't fail if it errors)
+        let version = 'unknown';
+        try {
+          const info = await Promise.race([
+            this.redisClient.info('server'),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 1000))
+          ]);
+          const versionMatch = info.match(/redis_version:([^\r\n]+)/);
+          if (versionMatch) {
+            version = versionMatch[1];
+          }
+        } catch (infoError) {
+          // Ignore info errors, not critical
+          logger.debug('Could not get Redis info:', infoError.message);
+        }
         
         return {
           status: 'healthy',
           responseTime: Date.now() - startTime,
           details: {
-            version: versionMatch ? versionMatch[1] : 'unknown',
+            version,
             connected: true
           }
         };
       }
 
       return {
-        status: 'unhealthy',
+        status: 'degraded',
         error: 'Redis PING failed',
         responseTime: Date.now() - startTime
       };
     } catch (error) {
-      logger.error('Redis health check failed:', error);
+      // Don't log as error, Redis is optional
+      logger.debug('Redis health check failed:', error.message);
       return {
         status: 'degraded',
         error: error.message,
@@ -308,5 +335,6 @@ function formatUptime(seconds) {
 }
 
 module.exports = HealthChecker;
+
 
 
