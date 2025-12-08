@@ -134,3 +134,4 @@ Tests run automatically in GitHub Actions (see `.github/workflows/e2e.yml`).
 - Check if cookies are being set correctly
 - Ensure backend authentication is working
 
+

@@ -215,3 +215,4 @@ npm install --save-dev sequelize-cli
 
 
 
+

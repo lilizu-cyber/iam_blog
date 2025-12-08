@@ -280,3 +280,4 @@ Recommended branch protection rules:
 - [Sequelize Migrations](https://sequelize.org/docs/v6/other-topics/migrations/)
 - [Playwright CI/CD](https://playwright.dev/docs/ci)
 
+

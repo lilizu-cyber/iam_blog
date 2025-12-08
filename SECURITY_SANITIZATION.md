@@ -281,3 +281,4 @@ You can customize sanitization in `src/backend/utils/sanitizer.js`:
 - [DOMPurify Documentation](https://github.com/cure53/DOMPurify)
 - [Sequelize Security](https://sequelize.org/docs/v6/other-topics/security/)
 
+

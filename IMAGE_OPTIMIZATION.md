@@ -375,3 +375,4 @@ Check logs for optimization metrics:
 - React component: `frontend/src/components/UI/OptimizedImage.jsx`
 - Environment config: `.env`
 
+

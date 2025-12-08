@@ -32,3 +32,4 @@ if (jwtSecretRegex.test(envContent)) {
 
 console.log('\n⚠️  Keep your .env file secure and never commit it to version control!');
 
+

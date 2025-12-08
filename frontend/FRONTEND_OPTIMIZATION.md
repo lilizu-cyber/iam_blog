@@ -262,3 +262,4 @@ navigator.serviceWorker.getRegistrations()
 - Manifest: `frontend/public/manifest.json`
 - Main entry: `frontend/src/main.jsx`
 
+

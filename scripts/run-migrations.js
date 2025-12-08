@@ -123,3 +123,4 @@ if (command === 'up' || !command) {
   process.exit(1);
 }
 
+

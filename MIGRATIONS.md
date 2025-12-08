@@ -169,3 +169,4 @@ DATABASE_URL=postgresql://user:password@host:port/database
 - Models: `src/backend/models/*.js`
 - Database setup: `scripts/setup-postgresql.js`
 
+

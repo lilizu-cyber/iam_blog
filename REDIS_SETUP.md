@@ -229,3 +229,4 @@ docker-compose down -v redis
 
 If you see Redis connection errors but the app is working, you can safely ignore them or start Redis if you need distributed rate limiting.
 
+
