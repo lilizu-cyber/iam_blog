@@ -131,10 +131,10 @@ class BlogPostProjection {
         }
       }
 
-      // Increment version
-      await this.readModelStore.updateOne(
+      // Increment version and update
+      await this.readModelStore.updateById(
         this.modelName,
-        { postId },
+        postId,
         { 
           $set: updateData,
           $inc: { version: 1 }
@@ -178,9 +178,9 @@ class BlogPostProjection {
         categoryId: existingPost.categoryId
       });
       
-      await this.readModelStore.updateOne(
+      await this.readModelStore.updateById(
         this.modelName,
-        { postId: data.postId },
+        data.postId,
         { 
           $set: { 
             status: 'published',
@@ -233,9 +233,9 @@ class BlogPostProjection {
     try {
       const { data } = event;
       
-      await this.readModelStore.updateOne(
+      await this.readModelStore.updateById(
         this.modelName,
-        { postId: data.postId },
+        data.postId,
         { 
           $set: { status: 'deleted' },
           $inc: { version: 1 }

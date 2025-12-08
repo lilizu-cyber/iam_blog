@@ -121,6 +121,7 @@ describe('BlogPostProjection', () => {
         }
       };
 
+      readModelStore.findOne.mockResolvedValue({ postId: 'post-123', version: 1 });
       readModelStore.updateById.mockResolvedValue({ id: 'post-123' });
 
       await projection.onBlogPostUpdated(event);
@@ -129,8 +130,11 @@ describe('BlogPostProjection', () => {
         'BlogPost',
         'post-123',
         expect.objectContaining({
-          title: 'Updated Title',
-          content: 'Updated content'
+          $set: expect.objectContaining({
+            title: 'Updated Title',
+            content: 'Updated content'
+          }),
+          $inc: { version: 1 }
         })
       );
     });
@@ -146,13 +150,25 @@ describe('BlogPostProjection', () => {
         }
       };
 
+      readModelStore.findOne.mockResolvedValue({ 
+        postId: 'post-123', 
+        title: 'Test Post',
+        content: 'Test content',
+        excerpt: 'Test excerpt',
+        tags: [],
+        categoryId: null
+      });
+
       await projection.onBlogPostPublished(event);
 
       expect(readModelStore.updateById).toHaveBeenCalledWith(
         'BlogPost',
         'post-123',
         expect.objectContaining({
-          status: 'published'
+          $set: expect.objectContaining({
+            status: 'published'
+          }),
+          $inc: { version: 1 }
         })
       );
     });
@@ -173,10 +189,14 @@ describe('BlogPostProjection', () => {
         'BlogPost',
         'post-123',
         expect.objectContaining({
-          status: 'deleted'
+          $set: expect.objectContaining({
+            status: 'deleted'
+          }),
+          $inc: { version: 1 }
         })
       );
     });
   });
 });
+
 

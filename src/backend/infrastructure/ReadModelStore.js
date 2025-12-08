@@ -289,7 +289,8 @@ class ReadModelStore {
   async updateById(modelName, id, update) {
     try {
       const Model = this.getModel(modelName);
-      const [affectedRows] = await Model.update(update, {
+      const sequelizeUpdate = this.convertUpdate(update);
+      const [affectedRows] = await Model.update(sequelizeUpdate, {
         where: { [Model.primaryKeyAttribute]: id },
         returning: true
       });

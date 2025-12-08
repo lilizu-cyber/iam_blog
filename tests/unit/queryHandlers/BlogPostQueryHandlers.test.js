@@ -183,10 +183,11 @@ describe('BlogPostQueryHandlers', () => {
       expect(result.posts).toHaveLength(1);
       expect(readModelStore.find).toHaveBeenCalledWith(
         'BlogPost',
-        { authorId: 'user-123', status: { $ne: 'deleted' } },
+        { authorId: 'user-123', status: 'published' },
         expect.any(Object)
       );
     });
   });
 });
+
 
