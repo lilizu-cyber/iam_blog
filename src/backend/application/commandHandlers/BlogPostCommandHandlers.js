@@ -124,33 +124,101 @@ class BlogPostCommandHandlers {
       const streamName = `blogpost-${postId}`;
 
       // Load aggregate from events
-      const events = await this.eventStore.readStream(streamName);
+      let events;
+      try {
+        events = await this.eventStore.readStream(streamName);
+      } catch (readError) {
+        logger.error('Error reading event stream', {
+          streamName,
+          error: readError.message,
+          stack: readError.stack
+        });
+        throw new Error(`Failed to read blog post events: ${readError.message}`);
+      }
+      
       if (events.length === 0) {
+        logger.warn('Blog post not found in event store', { postId, streamName });
         throw new Error('Blog post not found');
       }
 
       // Transform events from event store format to aggregate format
-      const transformedEvents = events.map(event => ({
-        type: event.eventType, // Event store uses eventType, aggregate expects type
-        data: event.data,
-        metadata: event.metadata
-      }));
+      let transformedEvents;
+      try {
+        transformedEvents = events.map(event => ({
+          type: event.eventType, // Event store uses eventType, aggregate expects type
+          data: event.data,
+          metadata: event.metadata
+        }));
+      } catch (transformError) {
+        logger.error('Error transforming events', {
+          postId,
+          error: transformError.message
+        });
+        throw new Error(`Failed to process blog post events: ${transformError.message}`);
+      }
 
-      const aggregate = BlogPostAggregate.fromEvents(transformedEvents);
-      aggregate.publish(authorId);
+      let aggregate;
+      try {
+        aggregate = BlogPostAggregate.fromEvents(transformedEvents);
+      } catch (aggregateError) {
+        logger.error('Error creating aggregate from events', {
+          postId,
+          error: aggregateError.message,
+          stack: aggregateError.stack
+        });
+        throw new Error(`Failed to load blog post: ${aggregateError.message}`);
+      }
+
+      try {
+        aggregate.publish(authorId);
+      } catch (publishError) {
+        logger.error('Error publishing aggregate', {
+          postId,
+          error: publishError.message,
+          stack: publishError.stack
+        });
+        throw new Error(`Failed to publish blog post: ${publishError.message}`);
+      }
 
       // Save new events
       const newEvents = aggregate.getUncommittedEvents();
+      if (newEvents.length === 0) {
+        logger.warn('No new events to save - post may already be published', { postId });
+        // Return success even if no new events (idempotent operation)
+        return { postId, success: true, message: 'Blog post is already published' };
+      }
+      
       // Use the last event's revision number (eventNumber) as expected revision
       const expectedRevision = events.length > 0 ? events[events.length - 1].revision : -1;
-      await this.eventStore.appendToStream(streamName, newEvents, expectedRevision);
+      
+      try {
+        await this.eventStore.appendToStream(streamName, newEvents, expectedRevision);
+      } catch (appendError) {
+        logger.error('Error appending events to stream', {
+          postId,
+          streamName,
+          error: appendError.message,
+          stack: appendError.stack
+        });
+        throw new Error(`Failed to save publish event: ${appendError.message}`);
+      }
       
       // Publish events
       for (const event of newEvents) {
-        await this.eventBus.publish({
-          ...event,
-          streamId: streamName
-        });
+        try {
+          await this.eventBus.publish({
+            ...event,
+            streamId: streamName
+          });
+        } catch (publishError) {
+          logger.error('Error publishing event to event bus', {
+            postId,
+            eventType: event.type,
+            error: publishError.message
+          });
+          // Don't fail the whole operation if event bus publish fails
+          // The event is already saved to the event store
+        }
       }
 
       aggregate.markEventsAsCommitted();
@@ -164,7 +232,9 @@ class BlogPostCommandHandlers {
     } catch (error) {
       logger.error('Error handling PublishBlogPost command', {
         commandId: command.id,
-        error: error.message
+        postId: command.data?.postId,
+        error: error.message,
+        stack: error.stack
       });
       throw error;
     }

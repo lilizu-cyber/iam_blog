@@ -160,10 +160,54 @@ export const blogApi = {
     return response.data
   },
 
-  // Generate post with AI
+  // Generate post with AI (longer timeout for AI generation)
   generatePost: async (data) => {
-    const response = await api.post('/blog/generate', data)
-    return response.data
+    // Create a separate axios instance with longer timeout for AI generation
+    // This ensures the timeout override works properly
+    const generateApi = axios.create({
+      baseURL: import.meta.env.VITE_API_URL || '/api',
+      timeout: 180000, // 3 minutes for AI generation
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      withCredentials: true,
+    });
+    
+    // Apply the same request interceptor to include auth headers
+    generateApi.interceptors.request.use(
+      (config) => {
+        const token = localStorage.getItem('authToken');
+        if (token) {
+          config.headers.Authorization = `Bearer ${token}`;
+        }
+        const userId = localStorage.getItem('userId');
+        const userEmail = localStorage.getItem('userEmail');
+        const userRole = localStorage.getItem('userRole');
+        if (userId) config.headers['x-user-id'] = userId;
+        if (userEmail) config.headers['x-user-email'] = userEmail;
+        if (userRole) config.headers['x-user-role'] = userRole;
+        return config;
+      },
+      (error) => Promise.reject(error)
+    );
+    
+    // Apply the same response interceptor
+    generateApi.interceptors.response.use(
+      (response) => response,
+      (error) => {
+        if (error.response?.status === 401) {
+          localStorage.removeItem('authToken');
+          localStorage.removeItem('userId');
+          localStorage.removeItem('userEmail');
+          localStorage.removeItem('userRole');
+          window.location.href = '/login';
+        }
+        return Promise.reject(error);
+      }
+    );
+    
+    const response = await generateApi.post('/blog/generate', data);
+    return response.data;
   },
 }
 

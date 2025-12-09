@@ -32,10 +32,34 @@ async function checkPostgreSQL(retries = MAX_RETRIES) {
       } else {
         console.error('❌ PostgreSQL connection failed:', error.message);
         if (error.message.includes('ECONNREFUSED')) {
-          console.error('\n💡 PostgreSQL is not running. Start it with:');
-          console.error('   docker-compose up -d postgresql');
-          console.error('   OR');
-          console.error('   Start your local PostgreSQL service');
+          console.error('\n💡 PostgreSQL is not running.');
+          console.error('   Attempting to auto-start PostgreSQL...');
+          
+          // Try to auto-start PostgreSQL
+          try {
+            const { execSync } = require('child_process');
+            const autoStartScript = require.resolve('./auto-start-postgres.js');
+            execSync(`node "${autoStartScript}"`, { stdio: 'inherit' });
+            
+            // Wait a bit and retry
+            console.log('⏳ Waiting for PostgreSQL to start...');
+            await new Promise(resolve => setTimeout(resolve, 3000));
+            
+            // Retry connection
+            try {
+              await sequelize.authenticate();
+              console.log('✅ PostgreSQL is ready (auto-started)');
+              await sequelize.close();
+              return true;
+            } catch (retryError) {
+              console.error('❌ Still cannot connect after auto-start attempt');
+            }
+          } catch (autoStartError) {
+            console.error('   Auto-start failed. Please start PostgreSQL manually:');
+            console.error('   docker-compose up -d postgresql');
+            console.error('   OR');
+            console.error('   npm run start:postgres');
+          }
         }
         await sequelize.close();
         return false;

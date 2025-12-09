@@ -179,21 +179,52 @@ module.exports = (commandBus, queryBus, readModelStore) => {
     handleValidationErrors,
     async (req, res) => {
       try {
+        const { postId } = req.params;
+        
+        // Check if post exists in read model first
+        try {
+          const existingPost = await readModelStore.findOne('BlogPost', { postId });
+          if (!existingPost) {
+            return res.status(404).json({
+              success: false,
+              message: 'Blog post not found'
+            });
+          }
+          
+          // Check if already published
+          if (existingPost.status === 'published') {
+            return res.status(400).json({
+              success: false,
+              message: 'Blog post is already published'
+            });
+          }
+        } catch (readError) {
+          logger.warn('Error checking post existence before publish', {
+            postId,
+            error: readError.message
+          });
+          // Continue anyway - might be a new post not yet in read model
+        }
+        
         const command = {
           type: 'PublishBlogPost',
           data: {
-            postId: req.params.postId,
-            authorId: req.user.id
+            postId: postId,
+            authorId: req.user?.id || 'system'
           },
           metadata: {
-            userId: req.user.id,
+            userId: req.user?.id || 'system',
             timestamp: new Date().toISOString(),
             ipAddress: req.ip,
             userAgent: req.get('User-Agent')
           }
         };
 
+        logger.info('Publishing blog post', { postId, userId: req.user?.id });
+        
         const result = await commandBus.execute(command);
+        
+        logger.info('Blog post published successfully', { postId, userId: req.user?.id });
         
         res.json({
           success: true,
@@ -201,9 +232,29 @@ module.exports = (commandBus, queryBus, readModelStore) => {
           data: result
         });
       } catch (error) {
-        res.status(500).json({
+        logger.error('Error publishing blog post:', {
+          postId: req.params.postId,
+          userId: req.user?.id,
+          error: error.message,
+          stack: error.stack
+        });
+        
+        // Provide more specific error messages
+        let statusCode = 500;
+        let errorMessage = error.message || 'Failed to publish blog post';
+        
+        if (error.message.includes('not found') || error.message.includes('Blog post not found')) {
+          statusCode = 404;
+          errorMessage = 'Blog post not found';
+        } else if (error.message.includes('already published') || error.message.includes('already')) {
+          statusCode = 400;
+          errorMessage = 'Blog post is already published';
+        }
+        
+        res.status(statusCode).json({
           success: false,
-          message: error.message
+          message: errorMessage,
+          error: error.name || 'PUBLISH_ERROR'
         });
       }
     }
@@ -875,38 +926,129 @@ module.exports = (commandBus, queryBus, readModelStore) => {
     ],
     handleValidationErrors,
     async (req, res) => {
+      // Set longer timeout for AI generation (3 minutes)
+      req.setTimeout(180000);
+      
+      // Ensure response is sent only once
+      let responseSent = false;
+      const sendResponse = (statusCode, data) => {
+        if (responseSent) {
+          logger.warn('Attempted to send response after it was already sent', { statusCode });
+          return;
+        }
+        responseSent = true;
+        try {
+          res.status(statusCode).json(data);
+        } catch (err) {
+          // Response already sent, ignore
+          logger.debug('Response already sent, ignoring duplicate send attempt');
+        }
+      };
+      
       try {
+        // Check if OpenAI is configured
+        const openaiService = require('../../services/openaiService');
+        if (!openaiService || !openaiService.isConfigured()) {
+          sendResponse(503, {
+            success: false,
+            message: 'OpenAI API is not configured. Please set OPENAI_API_KEY in environment variables.',
+            error: 'OPENAI_NOT_CONFIGURED'
+          });
+          return;
+        }
+
         const { prompt, categoryId } = req.body;
         
+        if (!prompt || prompt.trim().length < 10) {
+          sendResponse(400, {
+            success: false,
+            message: 'Prompt must be at least 10 characters long'
+          });
+          return;
+        }
+        
+        logger.info('Generating blog post', { 
+          userId: req.user?.id, 
+          promptLength: prompt.length,
+          categoryId 
+        });
+        
+        // Add timeout wrapper for the command execution
         const command = {
           type: 'GenerateBlogPost',
           data: {
             prompt: prompt.trim(),
             categoryId: categoryId || null,
-            authorId: req.user.id,
-            authorName: req.user.name || 'Admin',
-            authorEmail: req.user.email || 'admin@example.com'
+            authorId: req.user?.id || 'system',
+            authorName: req.user?.name || 'Admin',
+            authorEmail: req.user?.email || 'admin@example.com'
           },
           metadata: {
-            userId: req.user.id,
+            userId: req.user?.id || 'system',
             timestamp: new Date().toISOString(),
             ipAddress: req.ip,
             userAgent: req.get('User-Agent')
           }
         };
 
-        const result = await commandBus.execute(command);
+        // Execute with timeout
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('Command execution timeout after 150 seconds')), 150000);
+        });
         
-        res.json({
+        let result;
+        try {
+          result = await Promise.race([
+            commandBus.execute(command),
+            timeoutPromise
+          ]);
+        } catch (execError) {
+          // Re-throw to be caught by outer catch block
+          throw execError;
+        }
+        
+        logger.info('Blog post generated successfully', { 
+          postId: result?.postId,
+          userId: req.user?.id 
+        });
+        
+        sendResponse(200, {
           success: true,
           message: 'Blog post generated successfully',
           data: result
         });
       } catch (error) {
-        logger.error('Error generating blog post:', error);
-        res.status(500).json({
+        // Only send error response if not already sent
+        if (responseSent) {
+          logger.error('Error occurred but response already sent:', {
+            error: error.message,
+            userId: req.user?.id
+          });
+          return;
+        }
+        
+        logger.error('Error generating blog post:', {
+          error: error.message,
+          stack: error.stack,
+          userId: req.user?.id
+        });
+        
+        // Provide more specific error messages
+        let statusCode = 500;
+        let errorMessage = error.message || 'Failed to generate blog post';
+        
+        if (error.message.includes('OpenAI') || error.message.includes('API key')) {
+          statusCode = 503;
+          errorMessage = 'OpenAI API is not configured or unavailable. Please check your OPENAI_API_KEY.';
+        } else if (error.message.includes('timeout') || error.message.includes('Timeout')) {
+          statusCode = 504;
+          errorMessage = 'Request timed out. The AI generation is taking longer than expected. Please try again.';
+        }
+        
+        sendResponse(statusCode, {
           success: false,
-          message: error.message || 'Failed to generate blog post'
+          message: errorMessage,
+          error: error.name || 'GENERATION_ERROR'
         });
       }
     }

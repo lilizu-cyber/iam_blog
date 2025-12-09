@@ -178,13 +178,16 @@ class BlogPostProjection {
         categoryId: existingPost.categoryId
       });
       
+      // Set publishedAt to current time if not provided in event
+      const publishedAt = data.publishedAt ? new Date(data.publishedAt) : new Date();
+      
       await this.readModelStore.updateById(
         this.modelName,
         data.postId,
         { 
           $set: { 
             status: 'published',
-            publishedAt: new Date(data.publishedAt),
+            publishedAt: publishedAt,
             isIAMRelated: isIAMRelated,
             isSecurityRelated: isSecurityRelated
           },

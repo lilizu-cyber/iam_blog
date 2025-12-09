@@ -263,3 +263,4 @@ navigator.serviceWorker.getRegistrations()
 - Main entry: `frontend/src/main.jsx`
 
 
+

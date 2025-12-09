@@ -78,6 +78,8 @@ Go to **Settings** → **Secrets and variables** → **Actions** and add:
   postgresql://user:password@host:port/database
   ```
 
+**📖 Detailed Instructions**: See [docs/GITHUB_SECRETS_SETUP.md](../docs/GITHUB_SECRETS_SETUP.md) for step-by-step guide with screenshots and troubleshooting.
+
 #### Optional Secrets (for deployment)
 
 If you're using SSH deployment:

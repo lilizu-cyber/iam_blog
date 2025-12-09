@@ -289,7 +289,9 @@ class ReadModelStore {
   async updateById(modelName, id, update) {
     try {
       const Model = this.getModel(modelName);
-      const [affectedRows] = await Model.update(update, {
+      // Convert MongoDB-style update operators to Sequelize format
+      const sequelizeUpdate = this.convertUpdate(update);
+      const [affectedRows] = await Model.update(sequelizeUpdate, {
         where: { [Model.primaryKeyAttribute]: id },
         returning: true
       });
@@ -308,6 +310,7 @@ class ReadModelStore {
   }
 
   // Convert update operators to Sequelize format
+  // Also converts camelCase field names to snake_case for database columns
   convertUpdate(update) {
     if (!update || typeof update !== 'object') {
       return update;
@@ -317,14 +320,26 @@ class ReadModelStore {
       throw new Error('Sequelize not initialized. Call connect() first.');
     }
 
+    // Helper function to convert camelCase to snake_case
+    const toSnakeCase = (str) => {
+      return str.replace(/([A-Z])/g, '_$1').toLowerCase();
+    };
+
     // Handle update operators
     if (update.$set) {
-      const result = { ...update.$set };
+      const result = {};
+      // Convert camelCase field names to snake_case
+      for (const [key, value] of Object.entries(update.$set)) {
+        const snakeCaseKey = toSnakeCase(key);
+        result[snakeCaseKey] = value;
+      }
+      
       // Handle $inc operator
       if (update.$inc) {
         for (const [key, value] of Object.entries(update.$inc)) {
+          const snakeCaseKey = toSnakeCase(key);
           // Sequelize doesn't have direct $inc, so we need to use literal SQL
-          result[key] = this.sequelize.literal(`${key} + ${value}`);
+          result[snakeCaseKey] = this.sequelize.literal(`${snakeCaseKey} + ${value}`);
         }
       }
       return result;
@@ -334,13 +349,19 @@ class ReadModelStore {
     if (update.$inc) {
       const result = {};
       for (const [key, value] of Object.entries(update.$inc)) {
-        result[key] = this.sequelize.literal(`${key} + ${value}`);
+        const snakeCaseKey = toSnakeCase(key);
+        result[snakeCaseKey] = this.sequelize.literal(`${snakeCaseKey} + ${value}`);
       }
       return result;
     }
 
-    // Plain update object
-    return update;
+    // Plain update object - convert field names
+    const result = {};
+    for (const [key, value] of Object.entries(update)) {
+      const snakeCaseKey = toSnakeCase(key);
+      result[snakeCaseKey] = value;
+    }
+    return result;
   }
 
   async updateOne(modelName, query, update) {

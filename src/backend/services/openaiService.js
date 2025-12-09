@@ -43,7 +43,9 @@ class OpenAIService {
 
     try {
       this.client = new OpenAI({
-        apiKey: apiKey
+        apiKey: apiKey,
+        timeout: 120000, // 2 minute timeout for all requests
+        maxRetries: 2
       });
       this.model = model;
       logger.info('OpenAI service initialized successfully');
@@ -112,7 +114,12 @@ Make sure the content is:
         promptLength: prompt.length 
       });
 
-      const completion = await this.client.chat.completions.create({
+      // Add timeout wrapper for OpenAI API call (2 minutes)
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('OpenAI API call timed out after 120 seconds')), 120000);
+      });
+
+      const completionPromise = this.client.chat.completions.create({
         model: this.model,
         messages: [
           { role: 'system', content: systemPrompt },
@@ -123,8 +130,27 @@ Make sure the content is:
         response_format: { type: 'json_object' }
       });
 
-      const responseContent = completion.choices[0].message.content;
-      const generatedData = JSON.parse(responseContent);
+      const completion = await Promise.race([
+        completionPromise,
+        timeoutPromise
+      ]);
+
+      const responseContent = completion.choices[0]?.message?.content;
+      
+      if (!responseContent) {
+        throw new Error('OpenAI returned empty response');
+      }
+
+      let generatedData;
+      try {
+        generatedData = JSON.parse(responseContent);
+      } catch (parseError) {
+        logger.error('Failed to parse OpenAI response as JSON', {
+          responseContent: responseContent.substring(0, 200),
+          error: parseError.message
+        });
+        throw new Error('OpenAI returned invalid JSON response. Please try again.');
+      }
 
       // Validate and clean the generated data
       const cleanedData = this.cleanGeneratedData(generatedData, categoryId);

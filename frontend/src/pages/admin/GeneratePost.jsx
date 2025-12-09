@@ -34,7 +34,20 @@ export default function GeneratePost() {
         }
       },
       onError: (error) => {
-        toast.error(error.response?.data?.message || 'Failed to generate post')
+        const errorMessage = error.response?.data?.message || error.message || 'Failed to generate post'
+        
+        // Show specific error messages
+        if (error.response?.data?.error === 'OPENAI_NOT_CONFIGURED') {
+          toast.error('OpenAI API is not configured. Please set OPENAI_API_KEY in your backend environment variables.', {
+            duration: 6000
+          })
+        } else if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
+          toast.error('Request timed out. The AI generation is taking longer than expected. Please try again.', {
+            duration: 6000
+          })
+        } else {
+          toast.error(errorMessage)
+        }
       }
     }
   )
@@ -252,6 +265,7 @@ export default function GeneratePost() {
     </>
   )
 }
+
 
 
 
