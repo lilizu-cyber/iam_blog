@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
 import AdminHeader from '../../components/Admin/AdminHeader'
-import { useQuery, useMutation } from 'react-query'
+import { useQuery, useMutation, useQueryClient } from 'react-query'
 import toast from 'react-hot-toast'
 import { blogApi } from '../../services/api'
 import LoadingSpinner from '../../components/UI/LoadingSpinner'
@@ -11,6 +11,8 @@ import ErrorMessage from '../../components/UI/ErrorMessage'
 export default function EditPost() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
+  const isPublishingRef = useRef(false)
   const [formData, setFormData] = useState({
     title: '',
     content: '',
@@ -22,34 +24,48 @@ export default function EditPost() {
     featuredImage: null
   })
 
-  // Fetch post data
+  // Fetch post data - refetch on mount to ensure fresh data
   const { data: response, isLoading, error } = useQuery(
     ['blog-post', id],
     () => blogApi.getPostById(id),
     {
       enabled: !!id,
-      onSuccess: (data) => {
-        const post = data.data
-        setFormData({
-          title: post.title || '',
-          content: post.content || '',
-          excerpt: post.excerpt || '',
-          tags: post.tags.join(', ') || '',
-          categoryId: post.category?.id || '',
-          seoTitle: post.seo.title || '',
-          seoDescription: post.seo.description || '',
-          featuredImage: post.featuredImage
-        })
-      }
+      refetchOnMount: true, // Always refetch when component mounts
+      refetchOnWindowFocus: false, // Don't refetch on window focus
+      staleTime: 0, // Consider data stale immediately so it refetches
     }
   )
+
+  // Update form data when query data changes
+  useEffect(() => {
+    if (response?.success && response?.data) {
+      const post = response.data
+      setFormData({
+        title: post.title || '',
+        content: post.content || '',
+        excerpt: post.excerpt || '',
+        tags: post.tags.join(', ') || '',
+        categoryId: post.category?.id || '',
+        seoTitle: post.seo.title || '',
+        seoDescription: post.seo.description || '',
+        featuredImage: post.featuredImage
+      })
+    }
+  }, [response])
 
   const updatePostMutation = useMutation(
     (postData) => blogApi.updatePost(id, postData),
     {
       onSuccess: () => {
-        toast.success('Post updated successfully!')
-        navigate('/admin/posts')
+        // Invalidate queries to ensure fresh data when navigating back
+        queryClient.invalidateQueries(['blog-post', id])
+        queryClient.invalidateQueries(['admin-posts'])
+        
+        // Only show toast if we're not in the middle of publishing
+        if (!isPublishingRef.current) {
+          toast.success('Post updated successfully!')
+          navigate('/admin/posts')
+        }
       },
       onError: (error) => {
         toast.error(error.response?.data?.message || 'Failed to update post')
@@ -61,10 +77,18 @@ export default function EditPost() {
     () => blogApi.publishPost(id),
     {
       onSuccess: () => {
+        // Invalidate queries to ensure fresh data
+        queryClient.invalidateQueries(['blog-post', id])
+        queryClient.invalidateQueries(['admin-posts'])
+        
+        // Reset the flag
+        isPublishingRef.current = false
         toast.success('Post published successfully!')
         navigate('/admin/posts')
       },
       onError: (error) => {
+        // Reset the flag on error
+        isPublishingRef.current = false
         toast.error(error.response?.data?.message || 'Failed to publish post')
       }
     }
@@ -101,6 +125,9 @@ export default function EditPost() {
   const handlePublish = async () => {
     // First save the current changes, then publish
     try {
+      // Set flag to suppress update toast
+      isPublishingRef.current = true
+      
       const postData = {
         ...formData,
         tags: formData.tags.split(',').map(tag => tag.trim()).filter(Boolean),
@@ -120,11 +147,14 @@ export default function EditPost() {
       
       if (updateResult.success) {
         // Then publish after successful save
+        // This will show the "Post published successfully!" toast and navigate
         publishPostMutation.mutate()
       } else {
+        isPublishingRef.current = false
         toast.error('Failed to save changes. Please try again.')
       }
     } catch (error) {
+      isPublishingRef.current = false
       console.error('Error saving before publishing:', error)
       toast.error(error.response?.data?.message || 'Failed to save changes before publishing')
     }

@@ -12,7 +12,8 @@
     "build": "npm run build:backend && npm run build:frontend",
     "build:backend": "babel src/backend -d dist/backend",
     "build:frontend": "cd frontend && npm run build",
-    "start": "node --max-old-space-size=4096 dist/backend/server.js",
+    "start": "node --max-old-space-size=4096 src/backend/server.js",
+    "start:prod": "node --max-old-space-size=4096 dist/backend/server.js",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
@@ -34,11 +35,13 @@
     "migrate:status": "node scripts/run-migrations.js status",
     "backup:db": "node scripts/backup-database.js",
     "backup:db:docker": "node scripts/backup-database-docker.js",
+    "backup:db:scheduled": "node scripts/schedule-backups.js",
     "restore:db": "node scripts/restore-database.js",
     "restore:list": "node scripts/restore-database.js --list",
     "indexes:verify": "node scripts/verify-indexes.js",
     "indexes:create": "node scripts/create-missing-indexes.js",
-    "indexes:analyze": "node scripts/analyze-query-performance.js"
+    "indexes:analyze": "node scripts/analyze-query-performance.js",
+    "health:check": "node scripts/monitor-health.js"
   },
   "dependencies": {
     "@eventstore/db-client": "^6.1.0",

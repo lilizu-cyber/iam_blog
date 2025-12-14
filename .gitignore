@@ -8,6 +8,7 @@ yarn.lock
 .env.local
 .env.production
 .env.test
+.env.backup.*
 
 # Logs
 logs/*.log

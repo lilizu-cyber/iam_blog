@@ -53,47 +53,84 @@ api.interceptors.response.use(
   }
 )
 
+// Create a separate axios instance for blog post queries with longer timeout
+// Blog queries can take longer due to database operations (find + count)
+const blogApiInstance = axios.create({
+  baseURL: import.meta.env.VITE_API_URL || '/api',
+  timeout: 30000, // 30 seconds for blog queries (allows for database operations)
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  withCredentials: true,
+})
+
+// Apply same interceptors to blog API instance
+blogApiInstance.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('authToken')
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`
+    }
+    return config
+  },
+  (error) => Promise.reject(error)
+)
+
+blogApiInstance.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('authToken')
+      localStorage.removeItem('userId')
+      localStorage.removeItem('userEmail')
+      localStorage.removeItem('userRole')
+      window.location.href = '/login'
+    }
+    return Promise.reject(error)
+  }
+)
+
 // Blog API endpoints
 export const blogApi = {
-  // Get blog posts
+  // Get blog posts (uses longer timeout instance)
   getPosts: async (params = {}) => {
-    const response = await api.get('/blog/posts', { params })
+    const response = await blogApiInstance.get('/blog/posts', { params })
     return response.data
   },
 
-  // Get blog post by ID
+  // Get blog post by ID (uses longer timeout instance)
   getPostById: async (id) => {
-    const response = await api.get(`/blog/posts/${id}`)
+    const response = await blogApiInstance.get(`/blog/posts/${id}`)
     return response.data
   },
 
-  // Get blog post by slug
+  // Get blog post by slug (uses longer timeout instance)
   getPostBySlug: async (slug) => {
-    const response = await api.get(`/blog/posts/slug/${slug}`)
+    const response = await blogApiInstance.get(`/blog/posts/slug/${slug}`)
     return response.data
   },
 
-  // Get posts by author
+  // Get posts by author (uses longer timeout instance)
   getPostsByAuthor: async (authorId, params = {}) => {
-    const response = await api.get(`/blog/authors/${authorId}/posts`, { params })
+    const response = await blogApiInstance.get(`/blog/authors/${authorId}/posts`, { params })
     return response.data
   },
 
-  // Search posts
+  // Search posts (uses longer timeout instance)
   searchPosts: async (params = {}) => {
-    const response = await api.get('/blog/search', { params })
+    const response = await blogApiInstance.get('/blog/search', { params })
     return response.data
   },
 
-  // Get popular posts
+  // Get popular posts (uses longer timeout instance)
   getPopularPosts: async (params = {}) => {
-    const response = await api.get('/blog/popular', { params })
+    const response = await blogApiInstance.get('/blog/popular', { params })
     return response.data
   },
 
-  // Get security posts
+  // Get security posts (uses longer timeout instance)
   getSecurityPosts: async (params = {}) => {
-    const response = await api.get('/blog/security', { params })
+    const response = await blogApiInstance.get('/blog/security', { params })
     return response.data
   },
 
@@ -108,7 +145,7 @@ export const blogApi = {
 
   // Get IAM posts
   getIAMPosts: async (params = {}) => {
-    const response = await api.get('/blog/iam', { params })
+    const response = await blogApiInstance.get('/blog/iam', { params })
     return response.data
   },
 

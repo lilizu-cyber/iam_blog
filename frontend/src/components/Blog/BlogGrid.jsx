@@ -7,7 +7,7 @@ import {
   KeyIcon,
   CpuChipIcon
 } from '@heroicons/react/24/outline'
-import { formatDistanceToNow } from 'date-fns'
+import { formatRelativeTime } from '../../utils/dateUtils'
 import { motion } from 'framer-motion'
 import LoadingSpinner from '../UI/LoadingSpinner'
 import ErrorMessage from '../UI/ErrorMessage'
@@ -125,7 +125,7 @@ export default function BlogGrid({ data, isLoading, error, emptyMessage }) {
                     </div>
                   </div>
                   <div>
-                    {formatDistanceToNow(new Date(post.timestamps.publishedAt), { addSuffix: true })}
+                    {formatRelativeTime(post.timestamps.publishedAt)}
                   </div>
                 </div>
 

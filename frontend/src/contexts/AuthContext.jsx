@@ -94,17 +94,15 @@ export const AuthProvider = ({ children }) => {
         setIsAuthenticated(false)
       }
     } catch (error) {
-      // Don't set authenticated to false on network errors or aborted requests
+      // Don't set authenticated to false on aborted requests
       if (error.name === 'AbortError') {
         // Request was cancelled, ignore
         return
       }
-      if (error.name === 'TypeError' && error.message.includes('fetch')) {
-        // Network error, keep current state
-      } else {
-        setUser(null)
-        setIsAuthenticated(false)
-      }
+      // For any other error (network errors, etc.), set unauthenticated
+      // This ensures security - if we can't verify auth, deny access
+      setUser(null)
+      setIsAuthenticated(false)
     } finally {
       authCheckRequestRef.current = null
       setIsLoading(false)

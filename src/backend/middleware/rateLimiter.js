@@ -216,12 +216,18 @@ function createRateLimiter(options) {
       res.status(429).json({
         success: false,
         message: options.message || 'Too many requests from this IP, please try again later.',
-        retryAfter: Math.ceil(options.windowMs / 1000)
+        retryAfter: Math.ceil(options.windowMs / 1000),
+        limit: options.max,
+        windowMs: options.windowMs,
+        environment: process.env.NODE_ENV
       });
     },
     skip: (req) => {
       // Skip rate limiting for health checks
-      return req.path === '/health' || req.path === '/ready' || req.path === '/live';
+      if (req.path === '/health' || req.path === '/ready' || req.path === '/live') {
+        return true;
+      }
+      return false;
     }
   });
 }
@@ -255,9 +261,10 @@ const writeLimiter = createRateLimiter({
 });
 
 // Lenient rate limiter for read operations (blog posts, etc.)
+// More lenient in development to allow for rapid testing
 const readLimiter = createRateLimiter({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 200, // 200 read requests per 15 minutes
+  max: process.env.NODE_ENV === 'production' ? 200 : 1000, // 200 in production, 1000 in development
   message: 'Too many read requests from this IP, please try again later.'
 });
 

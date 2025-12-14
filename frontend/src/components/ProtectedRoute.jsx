@@ -6,6 +6,8 @@ export default function ProtectedRoute({ children }) {
   const { isAuthenticated, isLoading } = useAuth()
   const location = useLocation()
 
+  // Show loading while checking authentication
+  // Always wait for auth check to complete before allowing access
   if (isLoading) {
     return (
       <div className="min-h-screen bg-white dark:bg-gray-900 flex items-center justify-center">
@@ -14,8 +16,9 @@ export default function ProtectedRoute({ children }) {
     )
   }
 
+  // Redirect to login if not authenticated
+  // This is a security check - never allow access without authentication
   if (!isAuthenticated) {
-    // Redirect to login page with return url
     return <Navigate to="/admin/login" state={{ from: location }} replace />
   }
 

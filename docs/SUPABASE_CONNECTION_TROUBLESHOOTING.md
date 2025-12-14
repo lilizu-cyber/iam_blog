@@ -145,3 +145,5 @@ If direct connection doesn't work, try connection pooling:
 4. **Try a different network** - Test from a different internet connection
 5. **Contact Supabase support** - If database is definitely running
 
+
+

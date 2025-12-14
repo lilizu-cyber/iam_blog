@@ -52,6 +52,9 @@ class BlogPostQueryHandlers {
 
   // Get published blog posts with pagination
   async handleGetPublishedBlogPosts(query) {
+    const queryTimeout = 20000; // 20 seconds total timeout for the query
+    const startTime = Date.now();
+    
     try {
       const { 
         page = 1, 
@@ -64,15 +67,30 @@ class BlogPostQueryHandlers {
       // sortBy is in camelCase (e.g., 'publishedAt'), ReadModelStore.find will convert to snake_case
       const sort = { [sortBy]: sortOrder === 'desc' ? -1 : 1 };
 
-      const posts = await this.readModelStore.find(
-        this.modelName,
-        { status: 'published' },
-        { sort, limit, skip }
-      );
+      // Wrap database operations in a timeout to prevent hanging
+      const queryPromise = (async () => {
+        // Execute find and count in parallel for better performance
+        const [posts, total] = await Promise.all([
+          this.readModelStore.find(
+            this.modelName,
+            { status: 'published' },
+            { sort, limit, skip }
+          ),
+          this.readModelStore.count(this.modelName, { 
+            status: 'published' 
+          })
+        ]);
 
-      const total = await this.readModelStore.count(this.modelName, { 
-        status: 'published' 
+        return { posts, total };
+      })();
+
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => {
+          reject(new Error(`Query timeout after ${queryTimeout}ms`));
+        }, queryTimeout);
       });
+
+      const { posts, total } = await Promise.race([queryPromise, timeoutPromise]);
 
       const result = {
         posts: posts.map(post => this.formatBlogPost(post)),
@@ -86,16 +104,23 @@ class BlogPostQueryHandlers {
         }
       };
 
+      const duration = Date.now() - startTime;
       logger.debug('Retrieved published blog posts', { 
         count: posts.length, 
         page, 
-        total 
+        total,
+        duration: `${duration}ms`
       });
 
       return result;
     } catch (error) {
-      logger.error('Error handling GetPublishedBlogPosts query:', error);
-      logger.error('Query parameters:', query.parameters);
+      const duration = Date.now() - startTime;
+      logger.error('Error handling GetPublishedBlogPosts query:', {
+        error: error.message,
+        stack: error.stack,
+        queryParameters: query.parameters,
+        duration: `${duration}ms`
+      });
       throw error;
     }
   }

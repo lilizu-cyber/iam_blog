@@ -11,7 +11,7 @@ import {
   ShieldCheckIcon,
   KeyIcon
 } from '@heroicons/react/24/outline'
-import { formatDistanceToNow } from 'date-fns'
+import { formatRelativeTime } from '../utils/dateUtils'
 import { motion } from 'framer-motion'
 import { blogApi } from '../services/api'
 import LoadingSpinner from '../components/UI/LoadingSpinner'
@@ -349,7 +349,7 @@ export default function BlogList() {
                             </div>
                           </div>
                           <div>
-                            {formatDistanceToNow(new Date(post.timestamps.publishedAt), { addSuffix: true })}
+                            {formatRelativeTime(post.timestamps.publishedAt)}
                           </div>
                         </div>
 

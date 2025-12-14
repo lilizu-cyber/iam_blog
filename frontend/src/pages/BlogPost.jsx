@@ -9,7 +9,7 @@ import {
   ShareIcon,
   BookmarkIcon
 } from '@heroicons/react/24/outline'
-import { formatDistanceToNow, format } from 'date-fns'
+import { formatRelativeTime, formatAbsoluteTime } from '../utils/dateUtils'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import rehypeHighlight from 'rehype-highlight'
@@ -133,7 +133,7 @@ export default function BlogPost() {
                   </div>
                   <div className="flex items-center">
                     <CalendarIcon className="h-5 w-5 mr-2" />
-                    <span>{format(new Date(post.timestamps.publishedAt), 'MMMM d, yyyy')}</span>
+                    <span>{formatAbsoluteTime(post.timestamps.publishedAt, 'MMMM d, yyyy')}</span>
                   </div>
                   <div className="flex items-center">
                     <ClockIcon className="h-5 w-5 mr-2" />
@@ -221,10 +221,10 @@ export default function BlogPost() {
               <div className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-700">
                 <div className="flex items-center justify-between">
                   <div className="text-sm text-gray-500 dark:text-gray-400">
-                    Published {formatDistanceToNow(new Date(post.timestamps.publishedAt), { addSuffix: true })}
+                    Published {formatRelativeTime(post.timestamps.publishedAt)}
                     {post.timestamps.updatedAt && post.timestamps.updatedAt !== post.timestamps.publishedAt && (
                       <span className="ml-2">
-                        • Updated {formatDistanceToNow(new Date(post.timestamps.updatedAt), { addSuffix: true })}
+                        • Updated {formatRelativeTime(post.timestamps.updatedAt)}
                       </span>
                     )}
                   </div>

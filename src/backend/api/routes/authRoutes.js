@@ -396,53 +396,70 @@ module.exports = () => {
       }
       
       // Get validated JWT secret
-      const JWT_SECRET = getJWTSecret();
+      let JWT_SECRET;
+      try {
+        JWT_SECRET = getJWTSecret();
+      } catch (jwtSecretError) {
+        logger.error('JWT secret not available in /me endpoint', { error: jwtSecretError.message });
+        // Return 503 only if JWT secret is truly unavailable (critical error)
+        return res.status(503).json({
+          success: false,
+          isAuthenticated: false,
+          message: 'Service temporarily unavailable - authentication service not configured'
+        });
+      }
       
       // Verify token
       try {
         const decoded = jwt.verify(token, JWT_SECRET);
         
-        // Optionally fetch fresh user data from database
-        const userModule = require('../../models/User');
-        let User;
-        
-        // Handle User model initialization (it might be null if Sequelize wasn't ready when module loaded)
-        if (userModule && typeof userModule.sync === 'function') {
-          // Already a model instance
-          User = userModule;
-        } else if (userModule && userModule.defineUserModel) {
-          // Need to initialize using defineUserModel
-          const { getSequelize } = require('../../models/index');
-          const sequelize = getSequelize();
-          User = userModule.defineUserModel(sequelize);
-        } else if (typeof userModule === 'function') {
-          // It's the getUserModel function
-          User = userModule();
-        } else {
-          throw new Error('User model is not properly initialized');
-        }
-        
-        // Try to fetch user from database, but don't block if it fails
-        // Return user info from token if database query fails or times out
+        // Try to fetch fresh user data from database, but gracefully degrade if unavailable
         let user = null;
+        let dbAvailable = false;
+        
         try {
-          if (!User || typeof User.findByPk !== 'function') {
-            logger.warn('User model not available, using token data');
-          } else {
-            // Add timeout to database query (5 seconds)
+          const userModule = require('../../models/User');
+          let User;
+          
+          // Handle User model initialization (it might be null if Sequelize wasn't ready when module loaded)
+          if (userModule && typeof userModule.sync === 'function') {
+            // Already a model instance
+            User = userModule;
+          } else if (userModule && userModule.defineUserModel) {
+            // Need to initialize using defineUserModel
+            const { getSequelize } = require('../../models/index');
+            const sequelize = getSequelize();
+            if (!sequelize) {
+              throw new Error('Sequelize not initialized');
+            }
+            User = userModule.defineUserModel(sequelize);
+          } else if (typeof userModule === 'function') {
+            // It's the getUserModel function
+            User = userModule();
+          }
+          
+          // Try to fetch user from database, but don't block if it fails
+          // Return user info from token if database query fails or times out
+          if (User && typeof User.findByPk === 'function') {
+            // Add timeout to database query (3 seconds - shorter timeout for better UX)
             const userQuery = Promise.race([
               User.findByPk(decoded.userId || decoded.username),
               new Promise((_, reject) => 
-                setTimeout(() => reject(new Error('Database query timeout')), 5000)
+                setTimeout(() => reject(new Error('Database query timeout')), 3000)
               )
             ]);
             user = await userQuery;
+            dbAvailable = true;
+          } else {
+            logger.debug('User model not available, using token data');
           }
         } catch (dbError) {
-          logger.warn('Database query failed in /me endpoint, using token data', {
-            error: dbError.message
+          // Database errors are non-critical - we can still return user data from token
+          logger.debug('Database query failed in /me endpoint, using token data', {
+            error: dbError.message,
+            errorType: dbError.name
           });
-          // Continue with token data if database query fails
+          // Continue with token data if database query fails - this is expected behavior
         }
         
         // If user found in database and is inactive, return error
@@ -459,6 +476,8 @@ module.exports = () => {
         const timeUntilExpiry = decoded.exp ? (decoded.exp - now) : null;
         const oneDayInSeconds = 24 * 60 * 60;
         
+        // Build response data - use database data if available, otherwise use token data
+        // This allows the endpoint to work even when database is temporarily unavailable
         let responseData = {
           success: true,
           isAuthenticated: true,
@@ -468,7 +487,9 @@ module.exports = () => {
             email: user?.email || decoded.email,
             role: user?.role || decoded.role,
             loginTime: decoded.loginTime
-          }
+          },
+          // Indicate if database was available (for debugging/monitoring)
+          dbAvailable: dbAvailable
         };
 
         // Auto-refresh token if it expires within 1 day
@@ -544,22 +565,31 @@ module.exports = () => {
         ip: req.ip
       });
       
-      // Determine if this is a service unavailability error
-      const isServiceUnavailable = error.message.includes('timeout') ||
-                                   error.message.includes('connection') ||
-                                   error.message.includes('ECONNREFUSED') ||
-                                   error.message.includes('not available');
+      // Only return 503 for truly critical service unavailability errors
+      // Most errors should return 200 with isAuthenticated: false to avoid breaking the frontend
+      const isCriticalServiceError = error.message.includes('JWT_SECRET') ||
+                                     error.message.includes('authentication service') ||
+                                     (error.name === 'JsonWebTokenError' && error.message.includes('secret'));
       
       // Ensure we always send a JSON response
       if (!res.headersSent) {
-        const statusCode = isServiceUnavailable ? 503 : 500;
-        res.status(statusCode).json({
-          success: false,
-          isAuthenticated: false,
-          message: isServiceUnavailable
-            ? 'Service temporarily unavailable'
-            : 'Internal server error during authentication check'
-        });
+        // For critical service errors, return 503
+        // For other errors (including token errors, database timeouts, etc.), return 200 with isAuthenticated: false
+        // This prevents the frontend from breaking when database is temporarily unavailable
+        if (isCriticalServiceError) {
+          res.status(503).json({
+            success: false,
+            isAuthenticated: false,
+            message: 'Service temporarily unavailable - authentication service error'
+          });
+        } else {
+          // Return 200 for non-critical errors (token invalid, database timeout, etc.) to avoid breaking frontend
+          res.status(200).json({
+            success: false,
+            isAuthenticated: false,
+            message: 'Authentication check failed'
+          });
+        }
       }
     }
   });

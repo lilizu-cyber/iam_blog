@@ -46,3 +46,5 @@ postgresql://postgres.[PROJECT-REF]:[PASSWORD]@aws-0-[REGION].pooler.supabase.co
 1. Test connection: `node scripts/test-supabase-connection.js`
 2. Check dependencies: `npm run check:deps`
 
+
+
