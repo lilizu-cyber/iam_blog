@@ -264,11 +264,44 @@ class Server {
     // Uncomment if you want to collect CSP violation reports
     // this.app.post('/api/csp-report', express.json({ type: 'application/csp-report' }), getCSPReportHandler());
 
-    // CORS
+    // CORS - Allow production and preview Vercel URLs
+    const allowedOrigins = [];
+    
+    if (process.env.NODE_ENV === 'production') {
+      // Production Vercel URL
+      if (process.env.FRONTEND_URL) {
+        allowedOrigins.push(process.env.FRONTEND_URL);
+      }
+      // Allow all Vercel preview deployments (for PR previews)
+      allowedOrigins.push(/^https:\/\/.*\.vercel\.app$/);
+    } else {
+      // Development
+      allowedOrigins.push('http://localhost:3000');
+    }
+    
     this.app.use(cors({
-      origin: process.env.NODE_ENV === 'production' 
-        ? process.env.FRONTEND_URL 
-        : 'http://localhost:3000',
+      origin: (origin, callback) => {
+        // Allow requests with no origin (like mobile apps or curl requests)
+        if (!origin) return callback(null, true);
+        
+        // Check if origin matches any allowed pattern
+        const isAllowed = allowedOrigins.some(allowed => {
+          if (typeof allowed === 'string') {
+            return origin === allowed;
+          }
+          if (allowed instanceof RegExp) {
+            return allowed.test(origin);
+          }
+          return false;
+        });
+        
+        if (isAllowed) {
+          callback(null, true);
+        } else {
+          logger.warn('CORS blocked origin:', origin);
+          callback(new Error('Not allowed by CORS'));
+        }
+      },
       credentials: true,
     }));
 
