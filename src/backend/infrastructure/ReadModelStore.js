@@ -17,6 +17,11 @@ class ReadModelStore {
 
   async connect() {
     try {
+      // Validate connection string before attempting connection
+      if (!this.connectionString || typeof this.connectionString !== 'string' || this.connectionString.trim() === '') {
+        throw new Error('Database connection string is empty or invalid. Please set POSTGRESQL_URI environment variable.');
+      }
+      
       this.sequelize = initializeSequelize(this.connectionString);
       
       // Test connection with timeout

@@ -41,3 +41,6 @@ sequelize.authenticate()
 
 
 
+
+
+

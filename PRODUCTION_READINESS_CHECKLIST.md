@@ -120,6 +120,23 @@ This document outlines all requirements and considerations before deploying the 
   }
   ```
 
+#### 2.4 Row Level Security (RLS) ⚠️ **MEDIUM**
+- **Issue**: RLS disabled on Supabase tables (Security Advisor warning)
+- **Risk**: Medium - Less critical for direct Sequelize connections, but recommended for defense-in-depth
+- **Status**: ✅ **MIGRATION CREATED**
+- **Fix Required**:
+  - Enable RLS on all public tables
+  - Create permissive policies (safe for direct connections)
+  - Run migration: `npm run migrate`
+- **Files Created**:
+  - `src/backend/migrations/20250101000006-enable-rls.js` - RLS migration
+  - `docs/RLS_SETUP.md` - Complete RLS setup guide
+- **Action Required**:
+  - Run `npm run migrate` to enable RLS
+  - Verify in Supabase Security Advisor that warnings are resolved
+  - Test application functionality after enabling RLS
+- **Note**: Since the app uses Sequelize with direct PostgreSQL connections (not PostgREST), RLS is less critical but still recommended for security best practices
+
 ### 3. Error Handling & Logging
 
 #### 3.1 Error Information Leakage ⚠️ **HIGH**

@@ -109,8 +109,58 @@ class Server {
     logger.info('Initializing infrastructure components...');
 
     // Initialize Event Store (PostgreSQL-based)
-    const postgresUri = process.env.POSTGRESQL_URI || process.env.DATABASE_URL || 
-      'postgresql://postgres:postgres@localhost:5432/iam_blog_db';
+    // Log environment variables for debugging (without sensitive data)
+    logger.info('Checking database connection configuration...', {
+      hasPostgresqlUri: !!process.env.POSTGRESQL_URI,
+      hasDatabaseUrl: !!process.env.DATABASE_URL,
+      postgresqlUriLength: process.env.POSTGRESQL_URI ? process.env.POSTGRESQL_URI.length : 0,
+      databaseUrlLength: process.env.DATABASE_URL ? process.env.DATABASE_URL.length : 0
+    });
+    
+    const postgresUri = process.env.POSTGRESQL_URI || process.env.DATABASE_URL;
+    
+    // Validate connection string before attempting connection
+    if (!postgresUri) {
+      const error = new Error(
+        'POSTGRESQL_URI or DATABASE_URL is not set. ' +
+        'Please set POSTGRESQL_URI in Railway environment variables. ' +
+        'Go to Railway Dashboard → Your Service → Variables → Add POSTGRESQL_URI'
+      );
+      logger.error('Database connection string validation failed:', error.message);
+      throw error;
+    }
+    
+    if (typeof postgresUri !== 'string') {
+      const error = new Error(
+        `POSTGRESQL_URI must be a string. Got type: ${typeof postgresUri}`
+      );
+      logger.error('Database connection string validation failed:', error.message);
+      throw error;
+    }
+    
+    if (postgresUri.trim() === '') {
+      const error = new Error(
+        'POSTGRESQL_URI is set but is empty. ' +
+        'Please set a valid PostgreSQL connection string in Railway environment variables.'
+      );
+      logger.error('Database connection string validation failed:', error.message);
+      throw error;
+    }
+    
+    // Validate connection string format
+    if (!postgresUri.startsWith('postgresql://') && !postgresUri.startsWith('postgres://')) {
+      const error = new Error(
+        `Invalid database connection string format. Must start with 'postgresql://' or 'postgres://'. ` +
+        `Got: ${postgresUri.substring(0, 50)}... (length: ${postgresUri.length})`
+      );
+      logger.error('Database connection string format validation failed:', error.message);
+      throw error;
+    }
+    
+    logger.info('Database connection string validated successfully', {
+      uriLength: postgresUri.length,
+      startsWith: postgresUri.substring(0, 20) + '...'
+    });
     
     // Retry connection with better error messages
     const maxRetries = 5;

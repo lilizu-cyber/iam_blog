@@ -12,6 +12,30 @@ class PostgresEventStore {
 
   async connect() {
     try {
+      // Validate connection string before creating Sequelize instance
+      if (!this.connectionString) {
+        logger.error('PostgresEventStore: connectionString is undefined or null');
+        throw new Error('Database connection string is undefined. Please set POSTGRESQL_URI environment variable in Railway.');
+      }
+      
+      if (typeof this.connectionString !== 'string') {
+        logger.error('PostgresEventStore: connectionString is not a string', {
+          type: typeof this.connectionString,
+          value: String(this.connectionString)
+        });
+        throw new Error(`Database connection string must be a string. Got: ${typeof this.connectionString}`);
+      }
+      
+      if (this.connectionString.trim() === '') {
+        logger.error('PostgresEventStore: connectionString is empty');
+        throw new Error('Database connection string is empty. Please set POSTGRESQL_URI environment variable in Railway.');
+      }
+      
+      logger.debug('PostgresEventStore: Creating Sequelize instance', {
+        uriLength: this.connectionString.length,
+        uriPreview: this.connectionString.substring(0, 30) + '...'
+      });
+      
       // Connection pool configuration
       // Can be overridden via environment variables
       const poolConfig = {
@@ -21,15 +45,30 @@ class PostgresEventStore {
         idle: parseInt(process.env.DB_POOL_IDLE || '10000', 10)   // Maximum time (ms) a connection can be idle before being released
       };
 
-      this.sequelize = new Sequelize(this.connectionString, {
-        dialect: 'postgres',
-        logging: false, // Set to logger.debug for SQL logging
-        define: {
-          underscored: true,
-          freezeTableName: true
-        },
-        pool: poolConfig
-      });
+      // Wrap Sequelize instantiation to catch parsing errors
+      try {
+        this.sequelize = new Sequelize(this.connectionString, {
+          dialect: 'postgres',
+          logging: false, // Set to logger.debug for SQL logging
+          define: {
+            underscored: true,
+            freezeTableName: true
+          },
+          pool: poolConfig
+        });
+      } catch (sequelizeError) {
+        logger.error('Failed to create Sequelize instance:', {
+          error: sequelizeError.message,
+          stack: sequelizeError.stack,
+          connectionStringLength: this.connectionString ? this.connectionString.length : 0,
+          connectionStringPreview: this.connectionString ? this.connectionString.substring(0, 50) : 'undefined'
+        });
+        throw new Error(
+          `Failed to initialize Sequelize with connection string. ` +
+          `This usually means POSTGRESQL_URI is not set or is invalid. ` +
+          `Original error: ${sequelizeError.message}`
+        );
+      }
 
       // Define Event model
       // With underscored: true, Sequelize converts camelCase to snake_case automatically

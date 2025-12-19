@@ -8,6 +8,29 @@ function initializeSequelize(connectionString) {
     return sequelize;
   }
 
+  // Validate connection string before creating Sequelize instance
+  if (!connectionString) {
+    logger.error('initializeSequelize: connectionString is undefined or null');
+    throw new Error('Database connection string is undefined. Please set POSTGRESQL_URI environment variable in Railway.');
+  }
+  
+  if (typeof connectionString !== 'string') {
+    logger.error('initializeSequelize: connectionString is not a string', {
+      type: typeof connectionString
+    });
+    throw new Error(`Database connection string must be a string. Got: ${typeof connectionString}`);
+  }
+  
+  if (connectionString.trim() === '') {
+    logger.error('initializeSequelize: connectionString is empty');
+    throw new Error('Database connection string is empty. Please set POSTGRESQL_URI environment variable in Railway.');
+  }
+  
+  logger.debug('initializeSequelize: Creating Sequelize instance', {
+    uriLength: connectionString.length,
+    uriPreview: connectionString.substring(0, 30) + '...'
+  });
+
   // Connection pool configuration
   // Can be overridden via environment variables
   const poolConfig = {
@@ -17,15 +40,30 @@ function initializeSequelize(connectionString) {
     idle: parseInt(process.env.DB_POOL_IDLE || '10000', 10)   // Maximum time (ms) a connection can be idle before being released
   };
 
-  sequelize = new Sequelize(connectionString, {
-    dialect: 'postgres',
-    logging: false, // Set to logger.debug for SQL logging
-    define: {
-      underscored: true, // Use snake_case for column names (authorId -> author_id)
-      freezeTableName: true // Don't pluralize table names
-    },
-    pool: poolConfig
-  });
+  // Wrap Sequelize instantiation to catch parsing errors
+  try {
+    sequelize = new Sequelize(connectionString, {
+      dialect: 'postgres',
+      logging: false, // Set to logger.debug for SQL logging
+      define: {
+        underscored: true, // Use snake_case for column names (authorId -> author_id)
+        freezeTableName: true // Don't pluralize table names
+      },
+      pool: poolConfig
+    });
+  } catch (sequelizeError) {
+    logger.error('Failed to create Sequelize instance in initializeSequelize:', {
+      error: sequelizeError.message,
+      stack: sequelizeError.stack,
+      connectionStringLength: connectionString ? connectionString.length : 0,
+      connectionStringPreview: connectionString ? connectionString.substring(0, 50) : 'undefined'
+    });
+    throw new Error(
+      `Failed to initialize Sequelize with connection string. ` +
+      `This usually means POSTGRESQL_URI is not set or is invalid. ` +
+      `Original error: ${sequelizeError.message}`
+    );
+  }
 
   return sequelize;
 }
