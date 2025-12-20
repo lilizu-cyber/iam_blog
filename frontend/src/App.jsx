@@ -92,11 +92,10 @@ function App() {
               </ProtectedRoute>
             }>
               <Route index element={<AdminDashboard />} />
-              <Route path="dashboard" element={<AdminDashboard />}>
-                {/* Redirect any nested routes under dashboard/posts to /admin/posts */}
-                <Route path="posts" element={<Navigate to="/admin/posts" replace />} />
-                <Route path="posts/*" element={<Navigate to="/admin/posts" replace />} />
-              </Route>
+              <Route path="dashboard" element={<AdminDashboard />} />
+              {/* Explicit redirect for dashboard/posts - must come before catch-all */}
+              <Route path="dashboard/posts" element={<Navigate to="/admin/posts" replace />} />
+              <Route path="dashboard/posts/*" element={<Navigate to="/admin/posts" replace />} />
               <Route path="posts" element={<ManagePosts />} />
               <Route path="posts/new" element={<CreatePost />} />
               <Route path="posts/generate" element={<GeneratePost />} />
