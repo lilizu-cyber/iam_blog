@@ -108,9 +108,19 @@ export const AuthProvider = ({ children }) => {
         }
         
         // Only reset auth state if we didn't just log in
+        // Also check if we're currently on an admin page - if so, be more cautious
         if (!justLoggedInRef.current) {
-          setUser(null)
-          setIsAuthenticated(false)
+          // Only reset if we're not on an admin page (to avoid disrupting navigation)
+          const isOnAdminPage = window.location.pathname.startsWith('/admin')
+          if (!isOnAdminPage) {
+            console.log('[AuthContext] checkAuthStatus: Non-OK response, resetting auth (not on admin page)')
+            setUser(null)
+            setIsAuthenticated(false)
+          } else {
+            console.log('[AuthContext] checkAuthStatus: Non-OK response but on admin page - keeping auth state to avoid disruption')
+          }
+        } else {
+          console.log('[AuthContext] checkAuthStatus: Non-OK response but justLoggedInRef is true - keeping auth state')
         }
       }
     } catch (error) {
@@ -123,8 +133,17 @@ export const AuthProvider = ({ children }) => {
       // This ensures security - if we can't verify auth, deny access
       // But don't override a successful login
       if (!justLoggedInRef.current) {
-        setUser(null)
-        setIsAuthenticated(false)
+        // Only reset if we're not on an admin page (to avoid disrupting navigation)
+        const isOnAdminPage = window.location.pathname.startsWith('/admin')
+        if (!isOnAdminPage) {
+          console.log('[AuthContext] checkAuthStatus: Error occurred, resetting auth (not on admin page)')
+          setUser(null)
+          setIsAuthenticated(false)
+        } else {
+          console.log('[AuthContext] checkAuthStatus: Error occurred but on admin page - keeping auth state to avoid disruption')
+        }
+      } else {
+        console.log('[AuthContext] checkAuthStatus: Error occurred but justLoggedInRef is true - keeping auth state')
       }
     } finally {
       authCheckRequestRef.current = null
