@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, Navigate } from 'react-router-dom'
 import { useEffect, Suspense, lazy } from 'react'
 
 // Layout (eagerly loaded - used on all pages)
@@ -93,6 +93,8 @@ function App() {
             }>
               <Route index element={<AdminDashboard />} />
               <Route path="dashboard" element={<AdminDashboard />} />
+              {/* Redirect /admin/dashboard/posts to /admin/posts */}
+              <Route path="dashboard/posts" element={<Navigate to="/admin/posts" replace />} />
               <Route path="posts" element={<ManagePosts />} />
               <Route path="posts/new" element={<CreatePost />} />
               <Route path="posts/generate" element={<GeneratePost />} />
