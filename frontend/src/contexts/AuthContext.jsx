@@ -178,10 +178,10 @@ export const AuthProvider = ({ children }) => {
         // Reset auth check throttle to allow immediate check
         lastAuthCheckRef.current = 0
         // Don't call checkAuthStatus immediately after login - we already know we're authenticated
-        // Clear the flag after a short delay to allow normal auth checks to resume
+        // Clear the flag after a longer delay to allow navigation and initial page loads to complete
         setTimeout(() => {
           justLoggedInRef.current = false
-        }, 3000) // 3 seconds should be enough for navigation to complete
+        }, 10000) // 10 seconds should be enough for navigation and initial page loads
         return { success: true }
       } else {
         return { success: false, message: data.message || 'Login failed. Please try again.' }
