@@ -20,6 +20,7 @@ export const AuthProvider = ({ children }) => {
   const loginRequestRef = useRef(null)
   const authCheckRequestRef = useRef(null)
   const lastAuthCheckRef = useRef(0)
+  const justLoggedInRef = useRef(false) // Flag to prevent checkAuthStatus from resetting auth after login
 
   // Check authentication status on mount
   useEffect(() => {
@@ -62,12 +63,18 @@ export const AuthProvider = ({ children }) => {
               console.debug('Token automatically refreshed')
             }
           } else {
+            // Only reset auth state if we didn't just log in
+            if (!justLoggedInRef.current) {
+              setUser(null)
+              setIsAuthenticated(false)
+            }
+          }
+        } catch (parseError) {
+          // Only reset auth state if we didn't just log in
+          if (!justLoggedInRef.current) {
             setUser(null)
             setIsAuthenticated(false)
           }
-        } catch (parseError) {
-          setUser(null)
-          setIsAuthenticated(false)
         }
       } else {
         // If 401, try to refresh token
@@ -91,8 +98,11 @@ export const AuthProvider = ({ children }) => {
           }
         }
         
-        setUser(null)
-        setIsAuthenticated(false)
+        // Only reset auth state if we didn't just log in
+        if (!justLoggedInRef.current) {
+          setUser(null)
+          setIsAuthenticated(false)
+        }
       }
     } catch (error) {
       // Don't set authenticated to false on aborted requests
@@ -100,10 +110,13 @@ export const AuthProvider = ({ children }) => {
         // Request was cancelled, ignore
         return
       }
-      // For any other error (network errors, etc.), set unauthenticated
+      // For any other error (network errors, etc.), only set unauthenticated if we didn't just log in
       // This ensures security - if we can't verify auth, deny access
-      setUser(null)
-      setIsAuthenticated(false)
+      // But don't override a successful login
+      if (!justLoggedInRef.current) {
+        setUser(null)
+        setIsAuthenticated(false)
+      }
     } finally {
       authCheckRequestRef.current = null
       setIsLoading(false)
@@ -159,15 +172,16 @@ export const AuthProvider = ({ children }) => {
       if (data.success) {
         setUser(data.data)
         setIsAuthenticated(true)
+        setIsLoading(false) // Ensure loading is false so navigation can proceed
+        // Set flag to prevent checkAuthStatus from resetting auth state
+        justLoggedInRef.current = true
         // Reset auth check throttle to allow immediate check
         lastAuthCheckRef.current = 0
-        // Don't await checkAuthStatus - let it run in background
-        // This prevents it from blocking navigation or resetting auth state
-        // if the check fails (e.g., network error, 404, etc.)
-        checkAuthStatus().catch(() => {
-          // Silently handle errors - we already set authenticated state from login response
-          // If the check fails, we'll rely on the login response which was successful
-        })
+        // Don't call checkAuthStatus immediately after login - we already know we're authenticated
+        // Clear the flag after a short delay to allow normal auth checks to resume
+        setTimeout(() => {
+          justLoggedInRef.current = false
+        }, 3000) // 3 seconds should be enough for navigation to complete
         return { success: true }
       } else {
         return { success: false, message: data.message || 'Login failed. Please try again.' }
