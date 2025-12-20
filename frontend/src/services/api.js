@@ -42,12 +42,24 @@ api.interceptors.response.use(
   },
   (error) => {
     if (error.response?.status === 401) {
+      // Check if we're already on the login page to avoid redirect loops
+      if (window.location.pathname === '/admin/login') {
+        return Promise.reject(error)
+      }
+      
       // Handle unauthorized access
       localStorage.removeItem('authToken')
       localStorage.removeItem('userId')
       localStorage.removeItem('userEmail')
       localStorage.removeItem('userRole')
-      window.location.href = '/admin/login'
+      
+      // Only redirect if we're not already being redirected
+      // Use a small delay to allow React Router to handle navigation first
+      setTimeout(() => {
+        if (window.location.pathname !== '/admin/login') {
+          window.location.href = '/admin/login'
+        }
+      }, 100)
     }
     return Promise.reject(error)
   }
@@ -80,11 +92,23 @@ blogApiInstance.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
+      // Check if we're already on the login page to avoid redirect loops
+      if (window.location.pathname === '/admin/login') {
+        return Promise.reject(error)
+      }
+      
       localStorage.removeItem('authToken')
       localStorage.removeItem('userId')
       localStorage.removeItem('userEmail')
       localStorage.removeItem('userRole')
-      window.location.href = '/admin/login'
+      
+      // Only redirect if we're not already being redirected
+      // Use a small delay to allow React Router to handle navigation first
+      setTimeout(() => {
+        if (window.location.pathname !== '/admin/login') {
+          window.location.href = '/admin/login'
+        }
+      }, 100)
     }
     return Promise.reject(error)
   }
