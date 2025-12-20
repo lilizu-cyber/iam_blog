@@ -161,8 +161,13 @@ export const AuthProvider = ({ children }) => {
         setIsAuthenticated(true)
         // Reset auth check throttle to allow immediate check
         lastAuthCheckRef.current = 0
-        // Force a re-check of auth status to ensure consistency
-        await checkAuthStatus()
+        // Don't await checkAuthStatus - let it run in background
+        // This prevents it from blocking navigation or resetting auth state
+        // if the check fails (e.g., network error, 404, etc.)
+        checkAuthStatus().catch(() => {
+          // Silently handle errors - we already set authenticated state from login response
+          // If the check fails, we'll rely on the login response which was successful
+        })
         return { success: true }
       } else {
         return { success: false, message: data.message || 'Login failed. Please try again.' }
