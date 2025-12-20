@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Helmet } from 'react-helmet-async'
+import { buildApiUrl } from '../utils/apiUrl'
 import { 
   ChatBubbleLeftRightIcon
 } from '@heroicons/react/24/outline'
@@ -26,7 +27,7 @@ export default function Contact() {
     setIsSubmitting(true)
 
     try {
-      const response = await fetch('/api/contact/send', {
+      const response = await fetch(buildApiUrl('/contact/send'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

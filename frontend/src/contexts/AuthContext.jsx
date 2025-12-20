@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect, useRef } from 'react'
+import { buildApiUrl } from '../utils/apiUrl'
 
 const AuthContext = createContext()
 
@@ -44,7 +45,7 @@ export const AuthProvider = ({ children }) => {
       const controller = new AbortController()
       authCheckRequestRef.current = controller
 
-      const response = await fetch('/api/auth/me', {
+      const response = await fetch(buildApiUrl('/auth/me'), {
         credentials: 'include',
         signal: controller.signal
       })
@@ -72,7 +73,7 @@ export const AuthProvider = ({ children }) => {
         // If 401, try to refresh token
         if (response.status === 401) {
           try {
-            const refreshResponse = await fetch('/api/auth/refresh', {
+            const refreshResponse = await fetch(buildApiUrl('/auth/refresh'), {
               method: 'POST',
               credentials: 'include'
             })
@@ -119,7 +120,7 @@ export const AuthProvider = ({ children }) => {
       const controller = new AbortController()
       loginRequestRef.current = controller
 
-      const response = await fetch('/api/auth/login', {
+      const response = await fetch(buildApiUrl('/auth/login'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -179,7 +180,7 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
-      await fetch('/api/auth/logout', {
+      await fetch(buildApiUrl('/auth/logout'), {
         method: 'POST',
         credentials: 'include'
       })
