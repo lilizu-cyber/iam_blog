@@ -131,11 +131,13 @@ module.exports = () => {
         }
         
         // Set HTTP-only cookie
+        // Use 'none' for sameSite in production to allow cross-origin requests (Vercel frontend to Railway backend)
+        // 'strict' only works for same-site requests
         try {
           res.cookie('adminToken', token, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
+            secure: process.env.NODE_ENV === 'production', // Must be true when sameSite is 'none'
+            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
             maxAge: 24 * 60 * 60 * 1000 // 24 hours
           });
         } catch (cookieError) {
@@ -289,10 +291,11 @@ module.exports = () => {
           }
 
           // Set new token in cookie
+          // Use 'none' for sameSite in production to allow cross-origin requests
           res.cookie('adminToken', newToken, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
+            secure: process.env.NODE_ENV === 'production', // Must be true when sameSite is 'none'
+            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
             maxAge: maxAge
           });
 
@@ -528,8 +531,8 @@ module.exports = () => {
 
             res.cookie('adminToken', newToken, {
               httpOnly: true,
-              secure: process.env.NODE_ENV === 'production',
-              sameSite: 'strict',
+              secure: process.env.NODE_ENV === 'production', // Must be true when sameSite is 'none'
+              sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
               maxAge: maxAge
             });
 
