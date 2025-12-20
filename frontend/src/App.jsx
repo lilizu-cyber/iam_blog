@@ -25,7 +25,7 @@ const AdminLogin = lazy(() => import('./pages/admin/Login'))
 const AdminDashboard = lazy(() => import('./pages/admin/Dashboard'))
 const CreatePost = lazy(() => import('./pages/admin/CreatePost'))
 const EditPost = lazy(() => import('./pages/admin/EditPost'))
-const ManagePosts = lazy(() => import('./pages/admin/ManagePosts'))
+const ManagePosts = lazy(() => import('./pages/admin/ManagePosts').catch(() => ({ default: () => <div>Error loading Manage Posts</div> })))
 const GeneratePost = lazy(() => import('./pages/admin/GeneratePost'))
 const NewsletterSubscribers = lazy(() => import('./pages/admin/NewsletterSubscribers'))
 const ContactMessages = lazy(() => import('./pages/admin/ContactMessages'))
@@ -96,13 +96,15 @@ function App() {
               {/* Explicit redirect for dashboard/posts - must come before catch-all */}
               <Route path="dashboard/posts" element={<Navigate to="/admin/posts" replace />} />
               <Route path="dashboard/posts/*" element={<Navigate to="/admin/posts" replace />} />
+              {/* Posts routes - must be before catch-all */}
               <Route path="posts" element={<ManagePosts />} />
               <Route path="posts/new" element={<CreatePost />} />
               <Route path="posts/generate" element={<GeneratePost />} />
               <Route path="posts/:id/edit" element={<EditPost />} />
+              {/* Other admin routes */}
               <Route path="newsletter" element={<NewsletterSubscribers />} />
               <Route path="contact" element={<ContactMessages />} />
-              {/* Catch-all for admin routes - redirect to dashboard */}
+              {/* Catch-all for admin routes - redirect to dashboard (must be last) */}
               <Route path="*" element={<AdminDashboard />} />
             </Route>
           </Routes>
