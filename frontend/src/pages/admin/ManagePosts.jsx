@@ -26,6 +26,20 @@ export default function ManagePosts() {
     {
       keepPreviousData: true,
       staleTime: 1000 * 60 * 5, // 5 minutes
+      retry: (failureCount, error) => {
+        // Don't retry on 401 - let the interceptor handle it
+        if (error?.response?.status === 401) {
+          return false
+        }
+        return failureCount < 3
+      },
+      onError: (error) => {
+        console.log('[ManagePosts] API error:', error?.response?.status, error?.message)
+        // Don't let React Query handle 401 - the interceptor will redirect
+        if (error?.response?.status !== 401) {
+          console.error('[ManagePosts] Failed to fetch posts:', error)
+        }
+      }
     }
   )
 

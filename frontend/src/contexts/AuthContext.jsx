@@ -191,7 +191,7 @@ export const AuthProvider = ({ children }) => {
         setTimeout(() => {
           justLoggedInRef.current = false
           console.log('[AuthContext] justLoggedInRef cleared - normal auth checks will resume')
-        }, 15000) // 15 seconds should be enough for navigation and initial page loads
+        }, 30000) // 30 seconds should be enough for navigation and initial page loads
         console.log('[AuthContext] Login successful - isAuthenticated set to true, justLoggedInRef set to true')
         return { success: true }
       } else {

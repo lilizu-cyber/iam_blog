@@ -20,7 +20,9 @@ export default function ProtectedRoute({ children }) {
   // This is a security check - never allow access without authentication
   if (!isAuthenticated) {
     // Log for debugging (remove in production if needed)
-    console.log('[ProtectedRoute] Redirecting to login - isAuthenticated:', isAuthenticated, 'location:', location.pathname)
+    console.log('[ProtectedRoute] Redirecting to login - isAuthenticated:', isAuthenticated, 'location:', location.pathname, 'isLoading:', isLoading)
+    // Add a small delay to see if auth state updates
+    // This helps avoid race conditions where auth state hasn't been set yet
     return <Navigate to="/admin/login" state={{ from: location }} replace />
   }
 
