@@ -19,6 +19,8 @@ export default function ProtectedRoute({ children }) {
   // Redirect to login if not authenticated
   // This is a security check - never allow access without authentication
   if (!isAuthenticated) {
+    // Log for debugging (remove in production if needed)
+    console.log('[ProtectedRoute] Redirecting to login - isAuthenticated:', isAuthenticated, 'location:', location.pathname)
     return <Navigate to="/admin/login" state={{ from: location }} replace />
   }
 

@@ -28,6 +28,12 @@ export const AuthProvider = ({ children }) => {
   }, [])
 
   const checkAuthStatus = async () => {
+    // Don't check auth status if we just logged in - trust the login response
+    // This prevents race conditions where checkAuthStatus runs before cookies are set
+    if (justLoggedInRef.current) {
+      return
+    }
+
     // Throttle auth checks - don't check more than once per 2 seconds
     const now = Date.now()
     if (now - lastAuthCheckRef.current < 2000) {
@@ -65,8 +71,11 @@ export const AuthProvider = ({ children }) => {
           } else {
             // Only reset auth state if we didn't just log in
             if (!justLoggedInRef.current) {
+              console.log('[AuthContext] checkAuthStatus: Auth check failed - resetting auth state')
               setUser(null)
               setIsAuthenticated(false)
+            } else {
+              console.log('[AuthContext] checkAuthStatus: Auth check failed but justLoggedInRef is true - keeping auth state')
             }
           }
         } catch (parseError) {
@@ -181,7 +190,9 @@ export const AuthProvider = ({ children }) => {
         // Clear the flag after a longer delay to allow navigation and initial page loads to complete
         setTimeout(() => {
           justLoggedInRef.current = false
-        }, 10000) // 10 seconds should be enough for navigation and initial page loads
+          console.log('[AuthContext] justLoggedInRef cleared - normal auth checks will resume')
+        }, 15000) // 15 seconds should be enough for navigation and initial page loads
+        console.log('[AuthContext] Login successful - isAuthenticated set to true, justLoggedInRef set to true')
         return { success: true }
       } else {
         return { success: false, message: data.message || 'Login failed. Please try again.' }
