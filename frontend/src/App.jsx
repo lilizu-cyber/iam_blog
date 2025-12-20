@@ -99,6 +99,8 @@ function App() {
               <Route path="posts/:id/edit" element={<EditPost />} />
               <Route path="newsletter" element={<NewsletterSubscribers />} />
               <Route path="contact" element={<ContactMessages />} />
+              {/* Catch-all for admin routes - redirect to dashboard */}
+              <Route path="*" element={<AdminDashboard />} />
             </Route>
           </Routes>
         </Suspense>
