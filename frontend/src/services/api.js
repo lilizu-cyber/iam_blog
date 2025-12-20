@@ -47,7 +47,7 @@ api.interceptors.response.use(
       localStorage.removeItem('userId')
       localStorage.removeItem('userEmail')
       localStorage.removeItem('userRole')
-      window.location.href = '/login'
+      window.location.href = '/admin/login'
     }
     return Promise.reject(error)
   }
@@ -84,7 +84,7 @@ blogApiInstance.interceptors.response.use(
       localStorage.removeItem('userId')
       localStorage.removeItem('userEmail')
       localStorage.removeItem('userRole')
-      window.location.href = '/login'
+      window.location.href = '/admin/login'
     }
     return Promise.reject(error)
   }
@@ -237,7 +237,7 @@ export const blogApi = {
           localStorage.removeItem('userId');
           localStorage.removeItem('userEmail');
           localStorage.removeItem('userRole');
-          window.location.href = '/login';
+          window.location.href = '/admin/login';
         }
         return Promise.reject(error);
       }
