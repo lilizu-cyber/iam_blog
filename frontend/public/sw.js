@@ -5,10 +5,10 @@ const CACHE_NAME = 'iam-blog-v1';
 const RUNTIME_CACHE = 'iam-blog-runtime-v1';
 
 // Assets to cache on install
+// Only cache assets that definitely exist - CSS/JS will be cached on first load
 const PRECACHE_ASSETS = [
   '/',
   '/index.html',
-  '/assets/index.css',
   '/manifest.json',
 ];
 
@@ -20,7 +20,15 @@ self.addEventListener('install', (event) => {
     caches.open(CACHE_NAME)
       .then((cache) => {
         console.log('[Service Worker] Caching static assets');
-        return cache.addAll(PRECACHE_ASSETS);
+        // Use addAll with error handling - cache what we can, skip failures
+        return Promise.allSettled(
+          PRECACHE_ASSETS.map(asset => 
+            cache.add(asset).catch(err => {
+              console.warn(`[Service Worker] Failed to cache ${asset}:`, err);
+              return null; // Continue even if one asset fails
+            })
+          )
+        );
       })
       .then(() => self.skipWaiting()) // Activate immediately
   );
