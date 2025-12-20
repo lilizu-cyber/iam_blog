@@ -10,11 +10,14 @@ import {
 import LoadingSpinner from '../../components/UI/LoadingSpinner'
 import ErrorMessage from '../../components/UI/ErrorMessage'
 import AdminHeader from '../../components/Admin/AdminHeader'
+import { buildApiUrl } from '../../utils/apiUrl'
 
 // API function to fetch subscribers
 const fetchSubscribers = async ({ queryKey }) => {
   const [_key, { page, status }] = queryKey
-  const response = await fetch(`/api/newsletter/subscribers?page=${page}&status=${status}`)
+  const response = await fetch(buildApiUrl(`/newsletter/subscribers?page=${page}&status=${status}`), {
+    credentials: 'include'
+  })
   if (!response.ok) {
     throw new Error('Failed to fetch subscribers')
   }
