@@ -10,9 +10,8 @@ import {
   BookmarkIcon
 } from '@heroicons/react/24/outline'
 import { formatRelativeTime, formatAbsoluteTime } from '../utils/dateUtils'
-import ReactMarkdown from 'react-markdown'
-import remarkGfm from 'remark-gfm'
-import rehypeHighlight from 'rehype-highlight'
+// Note: We're using HTML rendering instead of Markdown since ReactQuill outputs HTML
+// The backend sanitizes the HTML content, so it's safe to render
 import { blogApi } from '../services/api'
 import LoadingSpinner from '../components/UI/LoadingSpinner'
 import ErrorMessage from '../components/UI/ErrorMessage'
@@ -52,6 +51,72 @@ export default function BlogPost() {
   }
 
   const post = response.data
+  const postUrl = `${window.location.origin}/blog/${post.slug}`
+  const siteUrl = window.location.origin
+
+  // Generate JSON-LD structured data for SEO and AI models
+  const articleSchema = {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "headline": post.title,
+    "description": post.seo.description || post.excerpt,
+    "image": post.featuredImage ? post.featuredImage.url : `${siteUrl}/og-image.jpg`,
+    "datePublished": post.timestamps.publishedAt,
+    "dateModified": post.timestamps.updatedAt || post.timestamps.publishedAt,
+    "author": {
+      "@type": "Person",
+      "name": post.author.name,
+      "email": post.author.email,
+      ...(post.author.avatar && { "image": post.author.avatar })
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "CyberSec & IAM Blog",
+      "logo": {
+        "@type": "ImageObject",
+        "url": `${siteUrl}/images/icon-512x512.png`
+      }
+    },
+    "mainEntityOfPage": {
+      "@type": "WebPage",
+      "@id": postUrl
+    },
+    "articleSection": post.category?.name || "Cybersecurity",
+    "keywords": post.tags.join(', '),
+    "wordCount": post.metadata.wordCount,
+    "timeRequired": `PT${post.metadata.readingTime}M`,
+    "inLanguage": "en-US",
+    "isAccessibleForFree": true,
+    ...(post.category && {
+      "articleSection": post.category.name
+    })
+  }
+
+  // Breadcrumb schema
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Home",
+        "item": siteUrl
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": "Blog",
+        "item": `${siteUrl}/blog`
+      },
+      {
+        "@type": "ListItem",
+        "position": 3,
+        "name": post.title,
+        "item": postUrl
+      }
+    ]
+  }
 
   return (
     <>
@@ -59,22 +124,58 @@ export default function BlogPost() {
         <title>{post.seo.title || post.title} - CyberSec & IAM Blog</title>
         <meta name="description" content={post.seo.description || post.excerpt} />
         <meta name="keywords" content={post.tags.join(', ')} />
+        <link rel="canonical" href={postUrl} />
         
-        {/* Open Graph */}
-        <meta property="og:title" content={post.title} />
-        <meta property="og:description" content={post.excerpt} />
+        {/* Open Graph / Facebook */}
         <meta property="og:type" content="article" />
-        <meta property="og:url" content={`${window.location.origin}/blog/${post.slug}`} />
+        <meta property="og:url" content={postUrl} />
+        <meta property="og:title" content={post.seo.title || post.title} />
+        <meta property="og:description" content={post.seo.description || post.excerpt} />
+        <meta property="og:site_name" content="CyberSec & IAM Blog" />
         {post.featuredImage && (
-          <meta property="og:image" content={post.featuredImage.url} />
+          <>
+            <meta property="og:image" content={post.featuredImage.url} />
+            <meta property="og:image:width" content="1200" />
+            <meta property="og:image:height" content="630" />
+            <meta property="og:image:alt" content={post.featuredImage.alt || post.title} />
+          </>
         )}
+        <meta property="og:locale" content="en_US" />
         
-        {/* Article specific */}
+        {/* Article specific Open Graph */}
         <meta property="article:published_time" content={post.timestamps.publishedAt} />
+        <meta property="article:modified_time" content={post.timestamps.updatedAt || post.timestamps.publishedAt} />
         <meta property="article:author" content={post.author.name} />
+        <meta property="article:section" content={post.category?.name || "Cybersecurity"} />
         {post.tags.map(tag => (
           <meta key={tag} property="article:tag" content={tag} />
         ))}
+        
+        {/* Twitter Card */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:url" content={postUrl} />
+        <meta name="twitter:title" content={post.seo.title || post.title} />
+        <meta name="twitter:description" content={post.seo.description || post.excerpt} />
+        {post.featuredImage && (
+          <meta name="twitter:image" content={post.featuredImage.url} />
+        )}
+        <meta name="twitter:creator" content="@cybersec_iam" />
+        <meta name="twitter:site" content="@cybersec_iam" />
+        
+        {/* Additional SEO meta tags */}
+        <meta name="author" content={post.author.name} />
+        <meta name="article:author" content={post.author.name} />
+        <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+        <meta name="googlebot" content="index, follow" />
+        <meta name="bingbot" content="index, follow" />
+        
+        {/* JSON-LD Structured Data */}
+        <script type="application/ld+json">
+          {JSON.stringify(articleSchema)}
+        </script>
+        <script type="application/ld+json">
+          {JSON.stringify(breadcrumbSchema)}
+        </script>
       </Helmet>
 
       <article className="bg-white dark:bg-gray-900 min-h-screen">
@@ -154,68 +255,18 @@ export default function BlogPost() {
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
             {/* Main Content */}
             <div className="lg:col-span-3">
-              <div className="prose prose-lg dark:prose-dark max-w-none text-left [&>*]:text-left [&>*]:ml-0 [&>*]:pl-0">
-                <ReactMarkdown
-                  remarkPlugins={[remarkGfm]}
-                  rehypePlugins={[rehypeHighlight]}
-                  components={{
-                    // Custom components for better styling
-                    h1: ({ children }) => (
-                      <h1 className="text-3xl font-bold text-gray-900 dark:text-white mt-8 mb-4 text-left">
-                        {children}
-                      </h1>
-                    ),
-                    h2: ({ children }) => (
-                      <h2 className="text-2xl font-bold text-gray-900 dark:text-white mt-8 mb-4 text-left">
-                        {children}
-                      </h2>
-                    ),
-                    h3: ({ children }) => (
-                      <h3 className="text-xl font-bold text-gray-900 dark:text-white mt-6 mb-3 text-left">
-                        {children}
-                      </h3>
-                    ),
-                    p: ({ children }) => (
-                      <p className="text-gray-700 dark:text-gray-300 mb-4 leading-relaxed text-left indent-0">
-                        {children}
-                      </p>
-                    ),
-                    blockquote: ({ children }) => (
-                      <blockquote className="border-l-4 border-primary-500 bg-primary-50 dark:bg-primary-900/20 p-4 my-6 italic">
-                        {children}
-                      </blockquote>
-                    ),
-                    code: ({ inline, children, ...props }) => (
-                      inline ? (
-                        <code className="bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded text-sm font-mono" {...props}>
-                          {children}
-                        </code>
-                      ) : (
-                        <code className="block bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto" {...props}>
-                          {children}
-                        </code>
-                      )
-                    ),
-                    ul: ({ children }) => (
-                      <ul className="list-disc list-inside mb-4 ml-0 pl-4 text-left">
-                        {children}
-                      </ul>
-                    ),
-                    ol: ({ children }) => (
-                      <ol className="list-decimal list-inside mb-4 ml-0 pl-4 text-left">
-                        {children}
-                      </ol>
-                    ),
-                    li: ({ children }) => (
-                      <li className="text-gray-700 dark:text-gray-300 mb-2 text-left pl-0 ml-0">
-                        {children}
-                      </li>
-                    ),
-                  }}
-                >
-                  {post.content}
-                </ReactMarkdown>
-              </div>
+              {post.content && post.content.trim() ? (
+                <div 
+                  className="prose prose-lg dark:prose-invert max-w-none text-left blog-content"
+                  dangerouslySetInnerHTML={{ __html: post.content }}
+                />
+              ) : (
+                <div className="prose prose-lg dark:prose-invert max-w-none text-left">
+                  <p className="text-gray-500 dark:text-gray-400 italic">
+                    Content is not available for this article. Please try refreshing the page or contact support if the issue persists.
+                  </p>
+                </div>
+              )}
 
               {/* Article Footer */}
               <div className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-700">

@@ -21,9 +21,11 @@ export default function FeaturedPosts() {
 
   const { data: posts, isLoading, error } = useQuery(
     'featured-posts',
-    () => blogApi.getPosts({ limit: 3, sortBy: 'publishedAt', sortOrder: 'desc' }),
+    () => blogApi.getPosts({ limit: 3, sortBy: 'createdAt', sortOrder: 'desc' }),
     {
-      staleTime: 5 * 60 * 1000, // 5 minutes
+      staleTime: 30 * 1000, // 30 seconds - reduced from 5 minutes to show new posts faster
+      refetchOnWindowFocus: true, // Refetch when window regains focus
+      refetchOnMount: true, // Always refetch when component mounts
     }
   )
 

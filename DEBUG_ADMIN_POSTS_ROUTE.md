@@ -84,3 +84,5 @@ The route configuration is correct. The issue is likely:
 
 **Next step**: Check browser console for specific errors when accessing `/admin/posts`.
 
+
+

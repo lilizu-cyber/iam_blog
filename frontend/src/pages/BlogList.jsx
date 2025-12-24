@@ -19,8 +19,8 @@ import ErrorMessage from '../components/UI/ErrorMessage'
 import OptimizedImage from '../components/UI/OptimizedImage'
 
 const sortOptions = [
-  { value: 'publishedAt:desc', label: 'Latest First' },
-  { value: 'publishedAt:asc', label: 'Oldest First' },
+  { value: 'createdAt:desc', label: 'Latest First' },
+  { value: 'createdAt:asc', label: 'Oldest First' },
   { value: 'title:asc', label: 'Title A-Z' },
   { value: 'title:desc', label: 'Title Z-A' },
   { value: 'viewCount:desc', label: 'Most Viewed' },
@@ -34,7 +34,7 @@ export default function BlogList() {
 
   // Get current filters from URL
   const currentPage = parseInt(searchParams.get('page')) || 1
-  const currentSort = searchParams.get('sort') || 'publishedAt:desc'
+  const currentSort = searchParams.get('sort') || 'createdAt:desc'
   const currentCategory = searchParams.get('category') || ''
   const currentTag = searchParams.get('tag') || ''
   const securityOnly = searchParams.get('security') === 'true'
@@ -58,7 +58,9 @@ export default function BlogList() {
     }),
     {
       keepPreviousData: true,
-      staleTime: 2 * 60 * 1000, // 2 minutes
+      staleTime: 30 * 1000, // 30 seconds - reduced from 2 minutes to show new posts faster
+      refetchOnWindowFocus: true, // Refetch when window regains focus
+      refetchOnMount: true, // Always refetch when component mounts
     }
   )
 
@@ -103,6 +105,23 @@ export default function BlogList() {
       <Helmet>
         <title>Blog - CyberSec & IAM Insights</title>
         <meta name="description" content="Browse all our cybersecurity and identity management articles. Find expert insights, tutorials, and industry analysis." />
+        <link rel="canonical" href={`${window.location.origin}/blog`} />
+        
+        {/* Open Graph */}
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content={`${window.location.origin}/blog`} />
+        <meta property="og:title" content="Blog - CyberSec & IAM Insights" />
+        <meta property="og:description" content="Browse all our cybersecurity and identity management articles. Find expert insights, tutorials, and industry analysis." />
+        <meta property="og:site_name" content="CyberSec & IAM Blog" />
+        
+        {/* Twitter Card */}
+        <meta name="twitter:card" content="summary" />
+        <meta name="twitter:url" content={`${window.location.origin}/blog`} />
+        <meta name="twitter:title" content="Blog - CyberSec & IAM Insights" />
+        <meta name="twitter:description" content="Browse all our cybersecurity and identity management articles." />
+        
+        {/* SEO */}
+        <meta name="robots" content="index, follow" />
       </Helmet>
 
       <div className="bg-white dark:bg-gray-900 min-h-screen">

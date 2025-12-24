@@ -1,8 +1,10 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useMemo, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
 import { useMutation, useQueryClient } from 'react-query'
 import toast from 'react-hot-toast'
+import ReactQuill from 'react-quill'
+import 'react-quill/dist/quill.snow.css'
 import { buildApiUrl } from '../../utils/apiUrl'
 import { 
   PaperClipIcon, 
@@ -14,6 +16,7 @@ import {
 } from '@heroicons/react/24/outline'
 import { blogApi } from '../../services/api'
 import AdminHeader from '../../components/Admin/AdminHeader'
+import { getFeaturedImageForPost, postMentionsOkta } from '../../utils/oktaFeaturedImage'
 
 export default function CreatePost() {
   const navigate = useNavigate()
@@ -30,17 +33,62 @@ export default function CreatePost() {
   })
   const [uploadedFiles, setUploadedFiles] = useState([])
   const [uploading, setUploading] = useState(false)
-  const contentTextareaRef = useRef(null)
+  const quillRef = useRef(null)
+
+  // Set up Quill text-change handler to clean duplicates in real-time
+  useEffect(() => {
+    const quill = quillRef.current?.getEditor()
+    if (!quill) return
+
+    let isCleaning = false
+
+    const handleTextChange = () => {
+      // Prevent infinite loops
+      if (isCleaning) return
+      
+      const html = quill.root.innerHTML
+      const cleaned = cleanListContent(html)
+      
+      // Only update if content changed
+      if (cleaned !== html) {
+        isCleaning = true
+        const selection = quill.getSelection()
+        const length = quill.getLength()
+        
+        quill.root.innerHTML = cleaned
+        const newLength = quill.getLength()
+        
+        // Restore cursor position (adjust if content length changed)
+        if (selection) {
+          setTimeout(() => {
+            const adjustedIndex = Math.min(selection.index, newLength - 1)
+            quill.setSelection(adjustedIndex, selection.length)
+            isCleaning = false
+          }, 0)
+        } else {
+          isCleaning = false
+        }
+      }
+    }
+
+    quill.on('text-change', handleTextChange)
+    
+    return () => {
+      quill.off('text-change', handleTextChange)
+    }
+  }, []) // Empty dependency array - only set up once
 
   const createPostMutation = useMutation(blogApi.createPost, {
     onSuccess: (data) => {
-      // Invalidate admin posts query to refresh the list
-      queryClient.invalidateQueries(['admin-posts'])
       toast.success('Post created successfully!')
-      // Small delay to ensure read model is created
+      // Invalidate and refetch admin posts query to refresh the list
+      queryClient.invalidateQueries(['admin-posts'])
+      // Wait a bit longer to ensure event projection has completed
       setTimeout(() => {
+        // Force a refetch when navigating
+        queryClient.refetchQueries(['admin-posts'])
         navigate('/admin/posts')
-      }, 500)
+      }, 1000) // Increased delay to 1 second
     },
     onError: (error) => {
       toast.error(error.response?.data?.message || 'Failed to create post')
@@ -49,10 +97,23 @@ export default function CreatePost() {
 
   const handleChange = (e) => {
     const { name, value } = e.target
-    setFormData(prev => ({
-      ...prev,
+    const updatedFormData = {
+      ...formData,
       [name]: value
-    }))
+    }
+    
+    setFormData(updatedFormData)
+    
+    // Auto-assign Okta featured image if Okta is mentioned and no featured image is set
+    if (postMentionsOkta(updatedFormData) && !updatedFormData.featuredImage) {
+      const oktaImage = getFeaturedImageForPost(updatedFormData, null)
+      if (oktaImage) {
+        setFormData(prev => ({
+          ...prev,
+          featuredImage: oktaImage
+        }))
+      }
+    }
   }
 
   const handleFileUpload = async (e) => {
@@ -129,56 +190,256 @@ export default function CreatePost() {
     }
   }
 
-  // Insert text at cursor position in content textarea
-  const insertAtCursor = (textToInsert) => {
-    const textarea = contentTextareaRef.current
-    if (!textarea) {
+  // Insert content at cursor position in Quill editor
+  const insertAtCursor = (content, isImage = false) => {
+    const quill = quillRef.current?.getEditor()
+    if (!quill) {
       toast.error('Please click on the content area first')
       return
     }
 
-    const start = textarea.selectionStart
-    const end = textarea.selectionEnd
-    const text = formData.content
-    const before = text.substring(0, start)
-    const after = text.substring(end)
+    const range = quill.getSelection(true)
+    if (!range) {
+      // If no selection, place cursor at the end
+      const length = quill.getLength()
+      quill.setSelection(length, 0)
+    }
 
-    // Insert the text with newlines for better formatting
-    const newText = before + (before && !before.endsWith('\n') ? '\n\n' : '') + textToInsert + (after && !after.startsWith('\n') ? '\n\n' : '') + after
+    if (isImage) {
+      // Insert image
+      quill.insertEmbed(range.index, 'image', content, 'user')
+      // Move cursor after the image
+      quill.setSelection(range.index + 1, 0)
+    } else {
+      // Insert text/HTML
+      quill.insertText(range.index, content, 'user')
+      // Move cursor after inserted content
+      quill.setSelection(range.index + content.length, 0)
+    }
 
-    setFormData(prev => ({
-      ...prev,
-      content: newText
-    }))
-
-    // Set cursor position after inserted text
-    setTimeout(() => {
-      const newPosition = start + textToInsert.length + (before && !before.endsWith('\n') ? 2 : 0) + (after && !after.startsWith('\n') ? 2 : 0)
-      textarea.focus()
-      textarea.setSelectionRange(newPosition, newPosition)
-    }, 0)
-
-    toast.success('Image inserted at cursor position')
+    quill.focus()
+    toast.success(isImage ? 'Image inserted at cursor position' : 'Content inserted at cursor position')
   }
 
-  // Insert image markdown at cursor position
+  // Insert image in Quill editor
   const handleInsertImage = (file) => {
-    const imageMarkdown = `![${file.originalName}](${file.path})`
-    insertAtCursor(imageMarkdown)
+    insertAtCursor(file.path, true)
   }
 
-  // Insert PDF link markdown at cursor position
+  // Insert PDF link in Quill editor
   const handleInsertPDFLink = (file) => {
-    const linkMarkdown = `[${file.originalName}](${file.path})`
-    insertAtCursor(linkMarkdown)
+    const quill = quillRef.current?.getEditor()
+    if (!quill) {
+      toast.error('Please click on the content area first')
+      return
+    }
+
+    const range = quill.getSelection(true) || { index: quill.getLength(), length: 0 }
+    quill.insertText(range.index, file.originalName, 'link', file.path, 'user')
+    quill.setSelection(range.index + file.originalName.length, 0)
+    quill.focus()
+    toast.success('PDF link inserted at cursor position')
   }
+
+  // Clean HTML content to remove duplicate list numbers/dots that Quill adds
+  // This uses aggressive regex and DOM manipulation to catch all patterns
+  const cleanListContent = (html) => {
+    if (!html || typeof html !== 'string') return html
+    
+    try {
+      // Use DOM manipulation for more reliable cleaning
+      const tempDiv = document.createElement('div')
+      tempDiv.innerHTML = html
+      
+      // Clean ordered list items - remove duplicate numbers
+      const olItems = tempDiv.querySelectorAll('ol li')
+      olItems.forEach(li => {
+        try {
+          // Get the first text node (which often contains the duplicate number)
+          const walker = document.createTreeWalker(
+            li,
+            NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT,
+            {
+              acceptNode: function(node) {
+                // Only process text nodes and non-list elements
+                if (node.nodeType === Node.TEXT_NODE) return NodeFilter.FILTER_ACCEPT
+                if (node.nodeType === Node.ELEMENT_NODE && 
+                    !['OL', 'UL', 'LI'].includes(node.tagName)) {
+                  return NodeFilter.FILTER_ACCEPT
+                }
+                return NodeFilter.FILTER_REJECT
+              }
+            },
+            false
+          )
+          
+          let firstTextNode = true
+          let node
+          while (node = walker.nextNode()) {
+            if (node.nodeType === Node.TEXT_NODE) {
+              let text = node.textContent
+              
+              // More aggressive patterns to catch duplicates like "1. 1. " or "2. 2."
+              if (firstTextNode) {
+                // Remove patterns like: "1. 1. ", "2. 2. ", "10. 10. "
+                text = text.replace(/^(\s*)(\d+)\.\s*(\d+)\.\s*/g, '$1')
+                // Remove patterns like: "1. 1 ", "2. 2 "
+                text = text.replace(/^(\s*)(\d+)\.\s*(\d+)\s+/g, '$1')
+                // Remove single number patterns at start: "1. ", "2. ", etc.
+                text = text.replace(/^(\s*)(\d+)\.\s+/g, '$1')
+                // Remove just numbers at start: "1 ", "2 "
+                text = text.replace(/^(\s*)(\d+)\s+/g, '$1')
+                // Remove any leading number
+                text = text.replace(/^(\s*)(\d+)/g, '$1')
+                firstTextNode = false
+              }
+              
+              node.textContent = text
+            }
+          }
+          
+          // Also check if the first child is a text node with duplicate numbers
+          if (li.firstChild && li.firstChild.nodeType === Node.TEXT_NODE) {
+            let firstText = li.firstChild.textContent
+            const originalText = firstText
+            // Remove duplicate number patterns
+            firstText = firstText.replace(/^(\s*)(\d+)\.\s*(\d+)\.\s*/g, '$1')
+            firstText = firstText.replace(/^(\s*)(\d+)\.\s*(\d+)\s+/g, '$1')
+            firstText = firstText.replace(/^(\s*)(\d+)\.\s+/g, '$1')
+            firstText = firstText.replace(/^(\s*)(\d+)\s+/g, '$1')
+            if (firstText !== originalText) {
+              li.firstChild.textContent = firstText
+            }
+          }
+        } catch (e) {
+          console.warn('Error cleaning ordered list item:', e)
+        }
+      })
+      
+      // Clean unordered list items - remove duplicate bullets
+      const ulItems = tempDiv.querySelectorAll('ul li')
+      ulItems.forEach(li => {
+        try {
+          const walker = document.createTreeWalker(
+            li,
+            NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT,
+            {
+              acceptNode: function(node) {
+                if (node.nodeType === Node.TEXT_NODE) return NodeFilter.FILTER_ACCEPT
+                if (node.nodeType === Node.ELEMENT_NODE && 
+                    !['OL', 'UL', 'LI'].includes(node.tagName)) {
+                  return NodeFilter.FILTER_ACCEPT
+                }
+                return NodeFilter.FILTER_REJECT
+              }
+            },
+            false
+          )
+          
+          let firstTextNode = true
+          let node
+          while (node = walker.nextNode()) {
+            if (node.nodeType === Node.TEXT_NODE) {
+              let text = node.textContent
+              
+              if (firstTextNode) {
+                // Remove all bullet patterns at the start
+                text = text.replace(/^(\s*)[•·▪▫◦‣⁃▪▫○●]\s*/g, '$1')
+                text = text.replace(/^(\s*)[\u2022\u2023\u25E6\u25AA\u25AB\u25CF\u25CB\u25A1\u25A0\u25C6\u25C7]\s*/g, '$1')
+                // Remove common bullet characters
+                text = text.replace(/^(\s*)[-*+]\s+/g, '$1')
+                firstTextNode = false
+              }
+              
+              node.textContent = text
+            }
+          }
+          
+          // Also check first child
+          if (li.firstChild && li.firstChild.nodeType === Node.TEXT_NODE) {
+            let firstText = li.firstChild.textContent
+            firstText = firstText.replace(/^(\s*)[•·▪▫◦‣⁃▪▫○●]\s*/g, '$1')
+            firstText = firstText.replace(/^(\s*)[\u2022\u2023\u25E6\u25AA\u25AB\u25CF\u25CB\u25A1\u25A0\u25C6\u25C7]\s*/g, '$1')
+            firstText = firstText.replace(/^(\s*)[-*+]\s+/g, '$1')
+            li.firstChild.textContent = firstText
+          }
+        } catch (e) {
+          console.warn('Error cleaning unordered list item:', e)
+        }
+      })
+      
+      return tempDiv.innerHTML
+    } catch (error) {
+      // If anything fails, return original HTML
+      console.warn('Error in cleanListContent:', error)
+      return html
+    }
+  }
+
+  // ReactQuill modules configuration
+  const modules = useMemo(() => ({
+    toolbar: {
+      container: [
+        [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+        [{ 'font': [] }],
+        [{ 'size': [] }],
+        ['bold', 'italic', 'underline', 'strike'],
+        [{ 'color': [] }, { 'background': [] }],
+        [{ 'script': 'sub'}, { 'script': 'super' }],
+        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+        [{ 'indent': '-1'}, { 'indent': '+1' }],
+        [{ 'direction': 'rtl' }],
+        [{ 'align': [] }],
+        ['blockquote', 'code-block'],
+        ['link', 'image', 'video'],
+        ['clean']
+      ],
+      handlers: {
+        image: function() {
+          // Custom image handler - show uploaded images
+          if (uploadedFiles.filter(f => f.type === 'image').length === 0) {
+            toast.error('Please upload an image first')
+            return
+          }
+          // For now, use default behavior and let users insert via the uploaded files section
+          // Or we could show a modal with uploaded images
+        }
+      }
+    },
+    syntax: {
+      highlight: text => text // Basic syntax highlighting
+    }
+  }), [uploadedFiles])
+
+  const formats = [
+    'header', 'font', 'size',
+    'bold', 'italic', 'underline', 'strike',
+    'color', 'background',
+    'script',
+    'list', 'bullet', 'indent',
+    'direction', 'align',
+    'blockquote', 'code-block',
+    'link', 'image', 'video',
+    'clean'
+  ]
 
   const handleSubmit = (e) => {
     e.preventDefault()
     
+    // Clean content one more time before submitting to remove any duplicate numbers/dots
+    const cleanedContent = cleanListContent(formData.content)
+    
+    // Validate content (ReactQuill returns HTML, check if it's not just empty tags)
+    const contentText = cleanedContent.replace(/<[^>]*>/g, '').trim()
+    if (!contentText) {
+      toast.error('Content is required')
+      return
+    }
+    
     // Clean up the data before sending
     const postData = {
       ...formData,
+      content: cleanedContent,
       tags: formData.tags.split(',').map(tag => tag.trim()).filter(Boolean),
       attachments: uploadedFiles, // Include uploaded files
       // Only include categoryId if it's not empty
@@ -253,19 +514,65 @@ export default function CreatePost() {
                   <label htmlFor="content" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Content *
                   </label>
-                  <textarea
-                    ref={contentTextareaRef}
-                    id="content"
-                    name="content"
-                    rows={20}
-                    required
-                    value={formData.content}
-                    onChange={handleChange}
-                    className="input w-full resize-none font-mono text-sm"
-                    placeholder="Write your post content in Markdown... Click on uploaded images below to insert them at cursor position."
-                  />
+                  <div className="rich-text-editor-wrapper">
+                    <ReactQuill
+                      ref={quillRef}
+                      theme="snow"
+                      value={formData.content}
+                      onChange={(value) => {
+                        try {
+                          // Clean the content to remove duplicate list numbers/dots
+                          const cleanedValue = cleanListContent(value)
+                          const updatedFormData = {
+                            ...formData,
+                            content: cleanedValue
+                          }
+                          
+                          setFormData(updatedFormData)
+                          
+                          // Auto-assign Okta featured image if Okta is mentioned and no featured image is set
+                          if (postMentionsOkta(updatedFormData) && !updatedFormData.featuredImage) {
+                            const oktaImage = getFeaturedImageForPost(updatedFormData, null)
+                            if (oktaImage) {
+                              setFormData(prev => ({
+                                ...prev,
+                                featuredImage: oktaImage
+                              }))
+                            }
+                          }
+                        } catch (error) {
+                          // If cleaning fails, just use the original value
+                          console.warn('Error cleaning list content:', error)
+                          const updatedFormData = {
+                            ...formData,
+                            content: value
+                          }
+                          
+                          setFormData(updatedFormData)
+                          
+                          // Auto-assign Okta featured image if Okta is mentioned
+                          if (postMentionsOkta(updatedFormData) && !updatedFormData.featuredImage) {
+                            const oktaImage = getFeaturedImageForPost(updatedFormData, null)
+                            if (oktaImage) {
+                              setFormData(prev => ({
+                                ...prev,
+                                featuredImage: oktaImage
+                              }))
+                            }
+                          }
+                        }
+                      }}
+                      modules={modules}
+                      formats={formats}
+                      placeholder="Start writing your post content... Use the toolbar to format text, add code blocks, lists, images, and more."
+                      style={{
+                        minHeight: '400px',
+                        marginBottom: '42px'
+                      }}
+                    />
+                  </div>
                   <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                    Supports Markdown formatting. Click on uploaded images to insert them at your cursor position.
+                    Use the toolbar to format your content. Click on uploaded images below to insert them at your cursor position.
                   </p>
                 </div>
               </div>

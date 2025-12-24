@@ -51,12 +51,82 @@ export default function Home() {
   const [featuresRef, featuresInView] = useInView({ triggerOnce: true, threshold: 0.1 })
   const [statsRef, statsInView] = useInView({ triggerOnce: true, threshold: 0.1 })
 
+  const siteUrl = window.location.origin
+
+  // Organization schema for SEO
+  const organizationSchema = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "CyberSec & IAM Blog",
+    "url": siteUrl,
+    "logo": `${siteUrl}/images/icon-512x512.png`,
+    "description": "Expert insights on cybersecurity, identity and access management (IAM), and AI-powered security solutions.",
+    "sameAs": [
+      "https://twitter.com/cybersec_iam",
+      "https://linkedin.com/company/cybersec-iam-blog"
+    ],
+    "contactPoint": {
+      "@type": "ContactPoint",
+      "contactType": "Customer Service",
+      "url": `${siteUrl}/contact`
+    }
+  }
+
+  // Website schema
+  const websiteSchema = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "CyberSec & IAM Blog",
+    "url": siteUrl,
+    "description": "Explore the latest in cybersecurity, identity and access management (IAM), and AI-powered security solutions.",
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": {
+        "@type": "EntryPoint",
+        "urlTemplate": `${siteUrl}/search?q={search_term_string}`
+      },
+      "query-input": "required name=search_term_string"
+    }
+  }
+
   return (
     <>
       <Helmet>
         <title>CyberSec & IAM Blog - Security Insights & Identity Management</title>
         <meta name="description" content="Explore the latest in cybersecurity, identity and access management (IAM), and AI-powered security solutions. Expert insights, tutorials, and industry trends." />
-        <meta name="keywords" content="cybersecurity, IAM, identity management, access control, security, AI security, authentication, authorization" />
+        <meta name="keywords" content="cybersecurity, IAM, identity management, access control, security, AI security, authentication, authorization, Okta, PAM, privileged access, identity governance" />
+        <link rel="canonical" href={siteUrl} />
+        
+        {/* Open Graph */}
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content={siteUrl} />
+        <meta property="og:title" content="CyberSec & IAM Blog - Security Insights & Identity Management" />
+        <meta property="og:description" content="Explore the latest in cybersecurity, identity and access management (IAM), and AI-powered security solutions." />
+        <meta property="og:image" content={`${siteUrl}/og-image.jpg`} />
+        <meta property="og:site_name" content="CyberSec & IAM Blog" />
+        <meta property="og:locale" content="en_US" />
+        
+        {/* Twitter Card */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:url" content={siteUrl} />
+        <meta name="twitter:title" content="CyberSec & IAM Blog - Security Insights & Identity Management" />
+        <meta name="twitter:description" content="Explore the latest in cybersecurity, identity and access management (IAM), and AI-powered security solutions." />
+        <meta name="twitter:image" content={`${siteUrl}/og-image.jpg`} />
+        <meta name="twitter:creator" content="@cybersec_iam" />
+        <meta name="twitter:site" content="@cybersec_iam" />
+        
+        {/* Additional SEO */}
+        <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+        <meta name="googlebot" content="index, follow" />
+        <meta name="bingbot" content="index, follow" />
+        
+        {/* JSON-LD Structured Data */}
+        <script type="application/ld+json">
+          {JSON.stringify(organizationSchema)}
+        </script>
+        <script type="application/ld+json">
+          {JSON.stringify(websiteSchema)}
+        </script>
       </Helmet>
 
       {/* Hero Section */}

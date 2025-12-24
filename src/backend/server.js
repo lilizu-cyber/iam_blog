@@ -614,6 +614,10 @@ class Server {
     this.app.use('/api/contact', contactRoutes(this.commandBus, this.queryBus, this.readModelStore));
     this.app.use('/api/upload', uploadRoutes());
     
+    // SEO routes (sitemap, robots.txt)
+    const seoRoutes = require('./api/routes/seoRoutes');
+    this.app.use('/', seoRoutes(this.readModelStore));
+    
     // Serve uploaded files statically
     this.app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 

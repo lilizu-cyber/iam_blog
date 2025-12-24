@@ -258,10 +258,48 @@ class ReadModelStore {
       // Convert sort object to Sequelize order array
       // Convert camelCase field names to snake_case for database columns
       if (Object.keys(sort).length > 0) {
+        const { Op } = require('sequelize');
         findOptions.order = Object.entries(sort).map(([field, direction]) => {
           // Convert camelCase to snake_case (e.g., publishedAt -> published_at)
           const snakeCaseField = field.replace(/([A-Z])/g, '_$1').toLowerCase();
-          return [snakeCaseField, direction === -1 || direction === 'desc' ? 'DESC' : 'ASC'];
+          // Check direction: -1 means DESC (newest first), 1 means ASC (oldest first)
+          // Also handle string values 'desc', 'DESC', 'asc', 'ASC'
+          const isDesc = direction === -1 || 
+                        (typeof direction === 'string' && direction.toLowerCase() === 'desc');
+          
+          logger.debug('Sort field processing', {
+            field,
+            snakeCaseField,
+            direction,
+            isDesc,
+            directionType: typeof direction
+          });
+          
+          // For publishedAt field, handle nulls - put nulls last when DESC, first when ASC
+          if (field === 'publishedAt' || snakeCaseField === 'published_at') {
+            // Use Sequelize literal to handle nulls properly
+            // NULLS LAST for DESC (newest first, nulls at end)
+            // NULLS FIRST for ASC (oldest first, nulls at start)
+            // Note: Using column name directly since we're using raw: true
+            const orderSQL = `${snakeCaseField} ${isDesc ? 'DESC' : 'ASC'} NULLS ${isDesc ? 'LAST' : 'FIRST'}`;
+            logger.debug('Using SQL literal for publishedAt sorting', { orderSQL, isDesc });
+            return this.sequelize.literal(orderSQL);
+          }
+          
+          // For createdAt field, handle nulls - put nulls last when DESC, first when ASC
+          if (field === 'createdAt' || snakeCaseField === 'created_at') {
+            // Use Sequelize literal to handle nulls properly
+            // NULLS LAST for DESC (newest first, nulls at end)
+            // NULLS FIRST for ASC (oldest first, nulls at start)
+            const orderSQL = `${snakeCaseField} ${isDesc ? 'DESC' : 'ASC'} NULLS ${isDesc ? 'LAST' : 'FIRST'}`;
+            logger.debug('Using SQL literal for createdAt sorting', { orderSQL, isDesc });
+            return this.sequelize.literal(orderSQL);
+          }
+          
+          // For other fields, use standard Sequelize order format
+          const orderDirection = isDesc ? 'DESC' : 'ASC';
+          logger.debug('Using standard order for field', { field, snakeCaseField, orderDirection });
+          return [snakeCaseField, orderDirection];
         });
       }
 
@@ -335,6 +373,11 @@ class ReadModelStore {
       const result = {};
       // Convert camelCase field names to snake_case
       for (const [key, value] of Object.entries(update.$set)) {
+        // Never allow createdAt to be updated - it's immutable
+        if (key === 'createdAt' || key === 'created_at') {
+          logger.warn('Attempted to update createdAt field, ignoring', { key, value });
+          continue;
+        }
         const snakeCaseKey = toSnakeCase(key);
         result[snakeCaseKey] = value;
       }

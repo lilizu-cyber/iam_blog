@@ -94,3 +94,5 @@ For best PWA experience:
 
 **Bottom line:** Icons are nice-to-have, not required! 🎯
 
+
+

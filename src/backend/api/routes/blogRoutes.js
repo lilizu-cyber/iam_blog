@@ -132,6 +132,7 @@ module.exports = (commandBus, queryBus, readModelStore) => {
         if (typeof value === 'object' && !Array.isArray(value)) return true;
         throw new Error('featuredImage must be an object or null');
       }),
+      body('tags').optional().isArray().withMessage('Tags must be an array'),
       body('attachments').optional().isArray(),
       body('seoTitle').optional().isString(),
       body('seoDescription').optional().isString()
@@ -451,6 +452,7 @@ module.exports = (commandBus, queryBus, readModelStore) => {
           query.status = status;
         } else {
           // Exclude deleted posts by default, include drafts, published, and archived
+          // Also handle null/undefined status by using Op.or to include them
           query.status = { $in: ['draft', 'published', 'archived'] };
         }
 
@@ -462,7 +464,16 @@ module.exports = (commandBus, queryBus, readModelStore) => {
           skip
         });
 
-        logger.debug('Admin posts found', { count: posts.length });
+        logger.debug('Admin posts found', { 
+          count: posts.length,
+          total: await readModelStore.count('BlogPost', query),
+          samplePost: posts.length > 0 ? {
+            postId: posts[0].postId,
+            title: posts[0].title,
+            status: posts[0].status,
+            createdAt: posts[0].createdAt
+          } : null
+        });
 
         const total = await readModelStore.count('BlogPost', query);
 
@@ -626,7 +637,7 @@ module.exports = (commandBus, queryBus, readModelStore) => {
     [
       query('page').optional().isInt({ min: 1 }),
       query('limit').optional().isInt({ min: 1, max: 100 }),
-      query('sortBy').optional().isIn(['publishedAt', 'title', 'viewCount', 'popularityScore']),
+      query('sortBy').optional().isIn(['createdAt', 'publishedAt', 'title', 'viewCount', 'popularityScore']),
       query('sortOrder').optional().isIn(['asc', 'desc'])
     ],
     handleValidationErrors,
@@ -645,7 +656,7 @@ module.exports = (commandBus, queryBus, readModelStore) => {
           parameters: {
             page: parseInt(req.query.page) || 1,
             limit: parseInt(req.query.limit) || 10,
-            sortBy: req.query.sortBy || 'publishedAt',
+            sortBy: req.query.sortBy || 'createdAt',
             sortOrder: req.query.sortOrder || 'desc'
           }
         };

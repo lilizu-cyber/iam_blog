@@ -99,3 +99,5 @@ sw.js:1 Uncaught (in promise) TypeError: Failed to execute 'addAll' on 'Cache': 
 2. You fix Vercel `VITE_API_URL` and redeploy
 3. Test again - errors should be gone!
 
+
+

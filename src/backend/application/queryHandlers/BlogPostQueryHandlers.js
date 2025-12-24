@@ -20,7 +20,14 @@ class BlogPostQueryHandlers {
         return null;
       }
 
-      logger.debug('Retrieved blog post by ID', { postId });
+      // Debug: Log content field to diagnose missing content issue
+      logger.debug('Retrieved blog post by ID', { 
+        postId,
+        hasContent: !!post.content,
+        contentLength: post.content ? post.content.length : 0,
+        status: post.status
+      });
+      
       return this.formatBlogPost(post);
     } catch (error) {
       logger.error('Error handling GetBlogPostById query:', error);
@@ -42,7 +49,38 @@ class BlogPostQueryHandlers {
         return null;
       }
 
-      logger.debug('Retrieved blog post by slug', { slug });
+      // Debug: Log content field to diagnose missing content issue
+      logger.debug('Retrieved blog post by slug', { 
+        slug,
+        postId: post.postId,
+        hasContent: !!post.content,
+        contentLength: post.content ? post.content.length : 0,
+        contentPreview: post.content ? post.content.substring(0, 100) : 'NO CONTENT'
+      });
+      
+      // If content is missing, try to retrieve it from the post by ID (without status filter)
+      // This handles cases where content might be missing from published posts
+      if (!post.content || post.content.trim() === '') {
+        logger.warn('Content missing for published post, attempting to retrieve by ID', {
+          postId: post.postId,
+          slug
+        });
+        
+        const postById = await this.readModelStore.findOne(this.modelName, { 
+          postId: post.postId,
+          status: { $ne: 'deleted' }
+        });
+        
+        if (postById && postById.content && postById.content.trim() !== '') {
+          logger.info('Retrieved missing content from post by ID', {
+            postId: post.postId,
+            contentLength: postById.content.length
+          });
+          // Merge the content from the ID query into the slug query result
+          post.content = postById.content;
+        }
+      }
+      
       return this.formatBlogPost(post);
     } catch (error) {
       logger.error('Error handling GetBlogPostBySlug query:', error);
@@ -59,13 +97,29 @@ class BlogPostQueryHandlers {
       const { 
         page = 1, 
         limit = 10, 
-        sortBy = 'publishedAt', 
+        sortBy = 'createdAt', 
         sortOrder = 'desc' 
       } = query.parameters;
 
       const skip = (page - 1) * limit;
       // sortBy is in camelCase (e.g., 'publishedAt'), ReadModelStore.find will convert to snake_case
-      const sort = { [sortBy]: sortOrder === 'desc' ? -1 : 1 };
+      // Use -1 for DESC (newest first), 1 for ASC (oldest first)
+      // Default to DESC for publishedAt to show newest posts first
+      let normalizedSortOrder = sortOrder;
+      if (!normalizedSortOrder && sortBy === 'publishedAt') {
+        normalizedSortOrder = 'desc'; // Default to newest first for publishedAt
+      }
+      const sortDirection = normalizedSortOrder === 'desc' || normalizedSortOrder === 'DESC' ? -1 : 1;
+      const sort = { [sortBy]: sortDirection };
+      
+      logger.debug('Sorting configuration', {
+        sortBy,
+        sortOrder,
+        normalizedSortOrder,
+        sortDirection,
+        sortObject: sort,
+        willSortDesc: sortDirection === -1
+      });
 
       // Wrap database operations in a timeout to prevent hanging
       const queryPromise = (async () => {
@@ -80,6 +134,35 @@ class BlogPostQueryHandlers {
             status: 'published' 
           })
         ]);
+
+        // Log for debugging - check if posts have publishedAt dates and verify sort order
+        if (posts.length > 0) {
+          logger.debug('Sample published posts (first 3)', {
+            sortBy,
+            sortOrder,
+            sampleCount: Math.min(3, posts.length),
+            samplePosts: posts.slice(0, 3).map(p => ({
+              postId: p.postId,
+              title: p.title,
+              status: p.status,
+              publishedAt: p.publishedAt,
+              hasPublishedAt: !!p.publishedAt,
+              publishedAtISO: p.publishedAt ? new Date(p.publishedAt).toISOString() : null
+            }))
+          });
+          
+          // Also log last 3 posts to verify sorting
+          if (posts.length > 3) {
+            logger.debug('Sample published posts (last 3)', {
+              samplePosts: posts.slice(-3).map(p => ({
+                postId: p.postId,
+                title: p.title,
+                publishedAt: p.publishedAt,
+                publishedAtISO: p.publishedAt ? new Date(p.publishedAt).toISOString() : null
+              }))
+            });
+          }
+        }
 
         return { posts, total };
       })();
@@ -605,10 +688,23 @@ class BlogPostQueryHandlers {
 
   // Format blog post for response
   formatBlogPost(post) {
+    // Ensure content is always a string (handle null/undefined)
+    const content = post.content || '';
+    
+    // Log warning if content is missing
+    if (!post.content || post.content.trim() === '') {
+      logger.warn('Blog post has empty or missing content', {
+        postId: post.postId,
+        slug: post.slug,
+        status: post.status,
+        title: post.title
+      });
+    }
+    
     return {
       id: post.postId,
       title: post.title,
-      content: post.content,
+      content: content,
       excerpt: post.excerpt,
       slug: post.slug,
       author: {

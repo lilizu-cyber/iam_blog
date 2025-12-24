@@ -9,6 +9,22 @@ import { Toaster } from 'react-hot-toast'
 import App from './App.jsx'
 import './index.css'
 
+// Suppress ReactQuill findDOMNode deprecation warning (library issue, not our code)
+// This warning comes from react-quill v2.0.0 using deprecated React APIs internally
+// It's harmless and will be fixed when the library updates
+if (process.env.NODE_ENV === 'development') {
+  const originalError = console.error
+  console.error = (...args) => {
+    if (
+      typeof args[0] === 'string' &&
+      args[0].includes('findDOMNode is deprecated')
+    ) {
+      return // Suppress this specific warning
+    }
+    originalError.call(console, ...args)
+  }
+}
+
 // Create a client with optimized caching
 const queryClient = new QueryClient({
   defaultOptions: {

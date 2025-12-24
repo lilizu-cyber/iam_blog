@@ -73,6 +73,10 @@ class BlogPostProjection {
       // Prepare the update object
       const updateData = { ...updates };
       
+      // Never allow createdAt to be updated - it's immutable
+      delete updateData.createdAt;
+      delete updateData.created_at;
+      
       // Handle tags update
       if (updates.tags !== undefined) {
         updateData.tags = updates.tags;

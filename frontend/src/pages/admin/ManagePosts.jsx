@@ -25,7 +25,9 @@ export default function ManagePosts() {
     }),
     {
       keepPreviousData: true,
-      staleTime: 1000 * 60 * 5, // 5 minutes
+      staleTime: 1000 * 30, // 30 seconds - reduced from 5 minutes to ensure fresh data
+      refetchOnWindowFocus: true, // Refetch when window regains focus
+      refetchOnMount: true, // Always refetch when component mounts
       retry: (failureCount, error) => {
         // Don't retry on 401 - let the interceptor handle it
         if (error?.response?.status === 401) {
@@ -39,6 +41,13 @@ export default function ManagePosts() {
         if (error?.response?.status !== 401) {
           console.error('[ManagePosts] Failed to fetch posts:', error)
         }
+      },
+      onSuccess: (data) => {
+        console.log('[ManagePosts] Posts loaded:', {
+          count: data?.data?.posts?.length || 0,
+          total: data?.data?.pagination?.total || 0,
+          page: data?.data?.pagination?.page || 1
+        })
       }
     }
   )
