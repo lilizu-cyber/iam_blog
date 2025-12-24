@@ -35,17 +35,20 @@ export default function Cookies() {
                 How We Use Cookies
               </h2>
               <p className="text-gray-700 dark:text-gray-300 mb-4">
-                We use cookies for the following purposes:
+                We use cookies and similar technologies for the following purposes:
               </p>
               <ul className="list-disc list-inside mb-4 ml-0 pl-4 text-left">
                 <li className="text-gray-700 dark:text-gray-300 mb-2">
-                  <strong>Essential Cookies:</strong> These cookies are necessary for the website to function properly
+                  <strong>Essential Cookies:</strong> These cookies are necessary for the website to function properly. 
+                  They include authentication cookies (adminToken) for logged-in administrators. These cannot be disabled.
                 </li>
                 <li className="text-gray-700 dark:text-gray-300 mb-2">
-                  <strong>Analytics Cookies:</strong> These cookies help us understand how visitors interact with our website
+                  <strong>Analytics Cookies:</strong> These cookies help us understand how visitors interact with our website 
+                  by collecting anonymous usage statistics, page views, and engagement metrics. This helps us improve our content and user experience.
                 </li>
                 <li className="text-gray-700 dark:text-gray-300 mb-2">
-                  <strong>Preference Cookies:</strong> These cookies remember your preferences, such as theme settings
+                  <strong>Preference Cookies:</strong> These cookies remember your preferences, such as theme settings (dark/light mode). 
+                  This information is stored in your browser's local storage.
                 </li>
               </ul>
             </section>
@@ -97,11 +100,30 @@ export default function Cookies() {
 
             <section className="mb-8">
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white mt-8 mb-4">
-                Third-Party Cookies
+                Cookie Consent
               </h2>
               <p className="text-gray-700 dark:text-gray-300 mb-4">
-                In addition to our own cookies, we may also use various third-party cookies to report 
-                usage statistics of the website and refine marketing efforts.
+                When you first visit our website, you will see a cookie consent banner. You can choose to:
+              </p>
+              <ul className="list-disc list-inside mb-4 ml-0 pl-4 text-left">
+                <li className="text-gray-700 dark:text-gray-300 mb-2">Accept all cookies (essential, analytics, and preferences)</li>
+                <li className="text-gray-700 dark:text-gray-300 mb-2">Customize your preferences and choose which types of cookies to accept</li>
+                <li className="text-gray-700 dark:text-gray-300 mb-2">Reject all non-essential cookies (only essential cookies will be used)</li>
+              </ul>
+              <p className="text-gray-700 dark:text-gray-300 mb-4">
+                Your consent preferences are stored in your browser's local storage and will be remembered for future visits. 
+                You can change your preferences at any time by clearing your browser's local storage or contacting us.
+              </p>
+            </section>
+
+            <section className="mb-8">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mt-8 mb-4">
+                Third-Party Services
+              </h2>
+              <p className="text-gray-700 dark:text-gray-300 mb-4">
+                Currently, we do not use third-party analytics services (such as Google Analytics). 
+                All analytics data is collected and processed by our own servers. If we add third-party services in the future, 
+                we will update this policy and provide you with the option to opt-out.
               </p>
             </section>
 

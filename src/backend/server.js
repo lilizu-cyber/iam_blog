@@ -29,6 +29,7 @@ const newsletterRoutes = require('./api/routes/newsletterRoutes');
 const authRoutes = require('./api/routes/authRoutes');
 const contactRoutes = require('./api/routes/contactRoutes');
 const uploadRoutes = require('./api/routes/uploadRoutes');
+const analyticsRoutes = require('./api/routes/analyticsRoutes');
 
 // Utils
 const logger = require('./utils/logger');
@@ -611,6 +612,7 @@ class Server {
     }
 
     this.app.use('/api/auth', authRoutes());
+    this.app.use('/api/analytics', analyticsRoutes(this.commandBus));
     this.app.use('/api/contact', contactRoutes(this.commandBus, this.queryBus, this.readModelStore));
     this.app.use('/api/upload', uploadRoutes());
     

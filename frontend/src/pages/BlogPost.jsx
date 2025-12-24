@@ -1,5 +1,6 @@
 import { useParams } from 'react-router-dom'
 import { useQuery } from 'react-query'
+import { useEffect } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { 
   ClockIcon, 
@@ -16,6 +17,7 @@ import { blogApi } from '../services/api'
 import LoadingSpinner from '../components/UI/LoadingSpinner'
 import ErrorMessage from '../components/UI/ErrorMessage'
 import OptimizedImage from '../components/UI/OptimizedImage'
+import { trackEvents } from '../services/analytics'
 
 export default function BlogPost() {
   const { slug } = useParams()
@@ -28,6 +30,14 @@ export default function BlogPost() {
       staleTime: 10 * 60 * 1000, // 10 minutes
     }
   )
+
+  // Track page view when post is loaded (only if analytics consent given)
+  useEffect(() => {
+    if (response?.success && response?.data) {
+      const post = response.data
+      trackEvents.postView(post.id, post.title)
+    }
+  }, [response])
 
   if (isLoading) {
     return (

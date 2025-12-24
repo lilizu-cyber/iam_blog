@@ -43,6 +43,15 @@ import { AuthProvider } from './contexts/AuthContext'
 // Hooks
 import { useThemeStore } from './stores/themeStore'
 
+// Components
+import CookieConsent from './components/UI/CookieConsent'
+
+// Analytics (will initialize if consent given)
+import './services/analytics'
+
+// Analytics (will initialize if consent given)
+import './services/analytics'
+
 function App() {
   const { theme, initializeTheme } = useThemeStore()
 
