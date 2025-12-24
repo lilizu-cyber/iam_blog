@@ -18,6 +18,7 @@ import LoadingSpinner from '../components/UI/LoadingSpinner'
 import ErrorMessage from '../components/UI/ErrorMessage'
 import OptimizedImage from '../components/UI/OptimizedImage'
 import { trackEvents } from '../services/analytics'
+import toast from 'react-hot-toast'
 
 export default function BlogPost() {
   const { slug } = useParams()
@@ -63,6 +64,44 @@ export default function BlogPost() {
   const post = response.data
   const postUrl = `${window.location.origin}/blog/${post.slug}`
   const siteUrl = window.location.origin
+
+  // Handle share functionality
+  const handleShare = async () => {
+    const shareData = {
+      title: post.title,
+      text: post.excerpt || post.title,
+      url: postUrl
+    }
+
+    try {
+      // Check if Web Share API is available (mobile browsers)
+      if (navigator.share) {
+        await navigator.share(shareData)
+        // Track share event
+        trackEvents.postShare(post.id, 'native')
+      } else {
+        // Fallback: Copy to clipboard
+        await navigator.clipboard.writeText(postUrl)
+        // Show toast notification
+        toast.success('Link copied to clipboard!')
+        // Track share event
+        trackEvents.postShare(post.id, 'copy')
+      }
+    } catch (error) {
+      // User cancelled share or error occurred
+      if (error.name !== 'AbortError') {
+        console.error('Error sharing:', error)
+        // Fallback to copy if share fails
+        try {
+          await navigator.clipboard.writeText(postUrl)
+          toast.success('Link copied to clipboard!')
+          trackEvents.postShare(post.id, 'copy')
+        } catch (clipboardError) {
+          console.error('Error copying to clipboard:', clipboardError)
+        }
+      }
+    }
+  }
 
   // Generate JSON-LD structured data for SEO and AI models
   const articleSchema = {
@@ -291,7 +330,11 @@ export default function BlogPost() {
                   </div>
                   
                   <div className="flex items-center space-x-4">
-                    <button className="btn-ghost text-sm">
+                    <button 
+                      onClick={handleShare}
+                      className="btn-ghost text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                      aria-label="Share this article"
+                    >
                       <ShareIcon className="h-4 w-4 mr-2" />
                       Share
                     </button>
