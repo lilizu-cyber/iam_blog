@@ -130,15 +130,15 @@ module.exports = () => {
           }
         }
         
-        // Set HTTP-only cookie
+        // Set HTTP-only session cookie (expires when browser closes)
         // Use 'none' for sameSite in production to allow cross-origin requests (Vercel frontend to Railway backend)
         // 'strict' only works for same-site requests
         try {
           res.cookie('adminToken', token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production', // Must be true when sameSite is 'none'
-            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
-            maxAge: 24 * 60 * 60 * 1000 // 24 hours
+            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict'
+            // No maxAge = session cookie (expires when browser closes)
           });
         } catch (cookieError) {
           logger.error('Failed to set authentication cookie', { error: cookieError.message, stack: cookieError.stack });
@@ -276,27 +276,13 @@ module.exports = () => {
             { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
           );
 
-          // Calculate maxAge from JWT_EXPIRES_IN
-          const expiresIn = process.env.JWT_EXPIRES_IN || '7d';
-          let maxAge = 7 * 24 * 60 * 60 * 1000; // Default: 7 days
-          if (expiresIn.endsWith('d')) {
-            const days = parseInt(expiresIn);
-            maxAge = days * 24 * 60 * 60 * 1000;
-          } else if (expiresIn.endsWith('h')) {
-            const hours = parseInt(expiresIn);
-            maxAge = hours * 60 * 60 * 1000;
-          } else if (expiresIn.endsWith('m')) {
-            const minutes = parseInt(expiresIn);
-            maxAge = minutes * 60 * 1000;
-          }
-
-          // Set new token in cookie
+          // Set new token in session cookie (expires when browser closes)
           // Use 'none' for sameSite in production to allow cross-origin requests
           res.cookie('adminToken', newToken, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production', // Must be true when sameSite is 'none'
-            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
-            maxAge: maxAge
+            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict'
+            // No maxAge = session cookie (expires when browser closes)
           });
 
           logger.info('Token refreshed successfully', {
@@ -515,25 +501,12 @@ module.exports = () => {
               { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
             );
 
-            // Calculate maxAge from JWT_EXPIRES_IN
-            const expiresIn = process.env.JWT_EXPIRES_IN || '7d';
-            let maxAge = 7 * 24 * 60 * 60 * 1000;
-            if (expiresIn.endsWith('d')) {
-              const days = parseInt(expiresIn);
-              maxAge = days * 24 * 60 * 60 * 1000;
-            } else if (expiresIn.endsWith('h')) {
-              const hours = parseInt(expiresIn);
-              maxAge = hours * 60 * 60 * 1000;
-            } else if (expiresIn.endsWith('m')) {
-              const minutes = parseInt(expiresIn);
-              maxAge = minutes * 60 * 1000;
-            }
-
+            // Set new token in session cookie (expires when browser closes)
             res.cookie('adminToken', newToken, {
               httpOnly: true,
               secure: process.env.NODE_ENV === 'production', // Must be true when sameSite is 'none'
-              sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
-              maxAge: maxAge
+              sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict'
+              // No maxAge = session cookie (expires when browser closes)
             });
 
             responseData.tokenRefreshed = true;

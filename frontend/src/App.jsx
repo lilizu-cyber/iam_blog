@@ -113,8 +113,8 @@ function App() {
               {/* Other admin routes */}
               <Route path="newsletter" element={<NewsletterSubscribers />} />
               <Route path="contact" element={<ContactMessages />} />
-              {/* Catch-all for admin routes - redirect to dashboard (must be last) */}
-              <Route path="*" element={<AdminDashboard />} />
+              {/* Catch-all for invalid admin routes - redirect to 404 (must be last) */}
+              <Route path="*" element={<NotFound />} />
             </Route>
           </Routes>
         </Suspense>
