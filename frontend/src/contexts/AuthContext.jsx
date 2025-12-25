@@ -31,21 +31,29 @@ export const AuthProvider = ({ children }) => {
     // Don't check auth status if we just logged in - trust the login response
     // This prevents race conditions where checkAuthStatus runs before cookies are set
     if (justLoggedInRef.current) {
+      // But still ensure loading is false so ProtectedRoute can work
+      setIsLoading(false)
       return
     }
 
     // Throttle auth checks - don't check more than once per 2 seconds
     const now = Date.now()
     if (now - lastAuthCheckRef.current < 2000) {
+      // If we're throttling, ensure loading is false
+      // This prevents infinite loading states
+      setIsLoading(false)
       return
     }
     lastAuthCheckRef.current = now
 
     // Cancel previous request if still in flight
     if (authCheckRequestRef.current) {
-      // AbortController would be better, but fetch doesn't support it in all cases
-      // Just skip if there's already a request
-      return
+      // Abort previous request
+      try {
+        authCheckRequestRef.current.abort()
+      } catch (e) {
+        // Ignore abort errors
+      }
     }
 
     try {
@@ -64,10 +72,12 @@ export const AuthProvider = ({ children }) => {
 
       clearTimeout(timeoutId)
       
+      // SECURITY: Only allow access if we get an explicit success response
       if (response.ok) {
         try {
           const data = await response.json()
-          if (data.success && data.isAuthenticated) {
+          // CRITICAL: Only set authenticated to true if BOTH success AND isAuthenticated are true
+          if (data.success === true && data.isAuthenticated === true) {
             setUser(data.data)
             setIsAuthenticated(true)
             
@@ -76,17 +86,24 @@ export const AuthProvider = ({ children }) => {
               console.debug('Token automatically refreshed')
             }
           } else {
-            // Only reset auth state if we didn't just log in
+            // SECURITY: Any other response means not authenticated
+            console.warn('[AuthContext] checkAuthStatus: Auth check returned non-authenticated', {
+              success: data.success,
+              isAuthenticated: data.isAuthenticated,
+              response: data
+            })
+            // Always deny access if response doesn't explicitly say we're authenticated
             if (!justLoggedInRef.current) {
-              console.log('[AuthContext] checkAuthStatus: Auth check failed - resetting auth state')
+              console.log('[AuthContext] checkAuthStatus: Auth check failed - denying access')
               setUser(null)
               setIsAuthenticated(false)
             } else {
-              console.log('[AuthContext] checkAuthStatus: Auth check failed but justLoggedInRef is true - keeping auth state')
+              console.warn('[AuthContext] checkAuthStatus: Auth check failed but justLoggedInRef is true - this may indicate a problem')
             }
           }
         } catch (parseError) {
-          // Only reset auth state if we didn't just log in
+          // SECURITY: If we can't parse the response, deny access
+          console.error('[AuthContext] checkAuthStatus: Failed to parse response - denying access', parseError)
           if (!justLoggedInRef.current) {
             setUser(null)
             setIsAuthenticated(false)

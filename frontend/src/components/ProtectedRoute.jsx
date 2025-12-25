@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import LoadingSpinner from './UI/LoadingSpinner'
@@ -6,9 +7,12 @@ export default function ProtectedRoute({ children }) {
   const { isAuthenticated, isLoading } = useAuth()
   const location = useLocation()
 
-  // Show loading while checking authentication
-  // Always wait for auth check to complete before allowing access
-  if (isLoading) {
+  // SECURITY: CRITICAL - Default to denying access
+  // Only show loading for a maximum of 5 seconds to prevent infinite loading
+  const [maxLoadTime] = useState(() => Date.now() + 5000)
+  const shouldShowLoading = isLoading && Date.now() < maxLoadTime
+
+  if (shouldShowLoading) {
     return (
       <div className="min-h-screen bg-white dark:bg-gray-900 flex items-center justify-center">
         <LoadingSpinner />
@@ -18,11 +22,15 @@ export default function ProtectedRoute({ children }) {
 
   // SECURITY: CRITICAL - Never allow access without explicit authentication
   // Default to denying access - only allow if explicitly authenticated
-  // This prevents any bypass scenarios where isAuthenticated might be undefined or true by default
-  if (!isAuthenticated) {
+  // Check multiple ways to ensure we catch any edge cases
+  const isExplicitlyAuthenticated = isAuthenticated === true && typeof isAuthenticated === 'boolean'
+  
+  if (!isExplicitlyAuthenticated) {
     // Log for debugging
-    console.warn('[ProtectedRoute] Access denied - redirecting to login', {
+    console.error('[ProtectedRoute] SECURITY: Access denied - redirecting to login', {
       isAuthenticated,
+      type: typeof isAuthenticated,
+      isExplicitlyAuthenticated,
       location: location.pathname,
       isLoading,
       timestamp: new Date().toISOString()
@@ -31,10 +39,9 @@ export default function ProtectedRoute({ children }) {
     return <Navigate to="/admin/login" state={{ from: location }} replace />
   }
 
-  // Only render children if explicitly authenticated
-  // Double-check to be absolutely sure
+  // Final security check - only render if explicitly authenticated
   if (isAuthenticated !== true) {
-    console.error('[ProtectedRoute] Security check failed - isAuthenticated is not explicitly true', {
+    console.error('[ProtectedRoute] SECURITY: Final check failed - isAuthenticated is not true', {
       isAuthenticated,
       type: typeof isAuthenticated
     })
