@@ -61,9 +61,9 @@ export default function Home() {
     "url": siteUrl,
     "logo": `${siteUrl}/images/icon-512x512.png`,
     "description": "Expert insights on cybersecurity, identity and access management (IAM), and AI-powered security solutions.",
-    "sameAs": [
-      "https://twitter.com/cybersec_iam",
-      "https://linkedin.com/company/cybersec-iam-blog"
+      "sameAs": [
+      "https://twitter.com/cyberiam_blog",
+      "https://linkedin.com/company/cyberiam-blog"
     ],
     "contactPoint": {
       "@type": "ContactPoint",

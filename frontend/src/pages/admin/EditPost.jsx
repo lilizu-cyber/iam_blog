@@ -195,6 +195,26 @@ export default function EditPost() {
     }
   )
 
+  const unpublishPostMutation = useMutation(
+    () => blogApi.unpublishPost(id),
+    {
+      onSuccess: () => {
+        // Invalidate all relevant queries to ensure fresh data
+        queryClient.invalidateQueries(['blog-post', id])
+        queryClient.invalidateQueries(['admin-posts'])
+        queryClient.invalidateQueries(['recent-posts'])
+        queryClient.invalidateQueries(['featured-posts'])
+        queryClient.invalidateQueries(['blog-posts'])
+        
+        toast.success('Post unpublished successfully!')
+        // Don't navigate away - let user continue editing
+      },
+      onError: (error) => {
+        toast.error(error.response?.data?.message || 'Failed to unpublish post')
+      }
+    }
+  )
+
   const handleChange = (e) => {
     const { name, value } = e.target
     
@@ -495,6 +515,20 @@ export default function EditPost() {
     }
   }
 
+  const handleUnpublish = async () => {
+    // Confirm before unpublishing
+    if (!window.confirm('Are you sure you want to unpublish this post? It will no longer be visible to the public.')) {
+      return
+    }
+
+    try {
+      unpublishPostMutation.mutate()
+    } catch (error) {
+      console.error('Error unpublishing post:', error)
+      toast.error(error.response?.data?.message || 'Failed to unpublish post')
+    }
+  }
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-white dark:bg-gray-900 flex items-center justify-center">
@@ -758,16 +792,29 @@ export default function EditPost() {
                 </button>
               </div>
               
-              {post.status !== 'published' && (
-                <button
-                  type="button"
-                  onClick={handlePublish}
-                  disabled={publishPostMutation.isLoading}
-                  className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {publishPostMutation.isLoading ? 'Publishing...' : 'Publish'}
-                </button>
-              )}
+              <div className="flex space-x-4">
+                {post.status === 'published' && (
+                  <button
+                    type="button"
+                    onClick={handleUnpublish}
+                    disabled={unpublishPostMutation.isLoading}
+                    className="btn-outline border-red-300 text-red-600 hover:bg-red-50 dark:border-red-700 dark:text-red-400 dark:hover:bg-red-900/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {unpublishPostMutation.isLoading ? 'Unpublishing...' : 'Unpublish'}
+                  </button>
+                )}
+                
+                {post.status !== 'published' && (
+                  <button
+                    type="button"
+                    onClick={handlePublish}
+                    disabled={publishPostMutation.isLoading}
+                    className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {publishPostMutation.isLoading ? 'Publishing...' : 'Publish'}
+                  </button>
+                )}
+              </div>
             </div>
           </form>
         </div>

@@ -265,7 +265,7 @@ class Server {
     // Uncomment if you want to collect CSP violation reports
     // this.app.post('/api/csp-report', express.json({ type: 'application/csp-report' }), getCSPReportHandler());
 
-    // CORS - Allow production and preview Vercel URLs
+    // CORS - Allow production and preview Vercel URLs, plus custom domain
     const allowedOrigins = [];
     
     if (process.env.NODE_ENV === 'production') {
@@ -275,6 +275,9 @@ class Server {
       }
       // Allow all Vercel preview deployments (for PR previews)
       allowedOrigins.push(/^https:\/\/.*\.vercel\.app$/);
+      // Allow custom domain cyberiam.blog
+      allowedOrigins.push('https://cyberiam.blog');
+      allowedOrigins.push(/^https:\/\/.*\.cyberiam\.blog$/);
     } else {
       // Development
       allowedOrigins.push('http://localhost:3000');
