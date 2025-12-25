@@ -16,17 +16,28 @@ export default function ProtectedRoute({ children }) {
     )
   }
 
-  // SECURITY: Redirect to login if not authenticated
-  // This is a critical security check - never allow access without authentication
-  // No exceptions, no delays, no bypasses
+  // SECURITY: CRITICAL - Never allow access without explicit authentication
+  // Default to denying access - only allow if explicitly authenticated
+  // This prevents any bypass scenarios where isAuthenticated might be undefined or true by default
   if (!isAuthenticated) {
     // Log for debugging
-    console.log('[ProtectedRoute] Access denied - redirecting to login', {
+    console.warn('[ProtectedRoute] Access denied - redirecting to login', {
       isAuthenticated,
       location: location.pathname,
-      isLoading
+      isLoading,
+      timestamp: new Date().toISOString()
     })
-    // Immediately redirect to login - no delay, no exceptions
+    // Immediately redirect to login - no delay, no exceptions, no bypasses
+    return <Navigate to="/admin/login" state={{ from: location }} replace />
+  }
+
+  // Only render children if explicitly authenticated
+  // Double-check to be absolutely sure
+  if (isAuthenticated !== true) {
+    console.error('[ProtectedRoute] Security check failed - isAuthenticated is not explicitly true', {
+      isAuthenticated,
+      type: typeof isAuthenticated
+    })
     return <Navigate to="/admin/login" state={{ from: location }} replace />
   }
 

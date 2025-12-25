@@ -52,10 +52,17 @@ export const AuthProvider = ({ children }) => {
       const controller = new AbortController()
       authCheckRequestRef.current = controller
 
+      // Set timeout to prevent hanging requests (10 seconds)
+      const timeoutId = setTimeout(() => {
+        controller.abort()
+      }, 10000)
+
       const response = await fetch(buildApiUrl('/auth/me'), {
         credentials: 'include',
         signal: controller.signal
       })
+
+      clearTimeout(timeoutId)
       
       if (response.ok) {
         try {
@@ -118,24 +125,36 @@ export const AuthProvider = ({ children }) => {
         }
       }
     } catch (error) {
-      // Don't set authenticated to false on aborted requests
+      // SECURITY: On ANY error (network, timeout, CORS, etc.), deny access
+      // This is critical - if we can't verify authentication, we must deny access
       if (error.name === 'AbortError') {
-        // Request was cancelled, ignore
+        // Request was cancelled or timed out - deny access
+        console.log('[AuthContext] checkAuthStatus: Request aborted/timed out - denying access')
+        if (!justLoggedInRef.current) {
+          setUser(null)
+          setIsAuthenticated(false)
+        }
+        // Still set loading to false so ProtectedRoute can redirect
+        authCheckRequestRef.current = null
+        setIsLoading(false)
         return
       }
-      // For any other error (network errors, etc.), only set unauthenticated if we didn't just log in
-      // SECURITY: Always reset auth state on error, regardless of page
-      // This ensures security - if we can't verify auth, deny access
-      // But don't override a successful login
+      
+      // For any other error (network errors, CORS, etc.), deny access
+      // SECURITY: Always reset auth state on error - if we can't verify auth, deny access
+      console.error('[AuthContext] checkAuthStatus: Error occurred - denying access', error)
       if (!justLoggedInRef.current) {
-        console.log('[AuthContext] checkAuthStatus: Error occurred, resetting auth state')
         setUser(null)
         setIsAuthenticated(false)
       } else {
-        console.log('[AuthContext] checkAuthStatus: Error occurred but justLoggedInRef is true - keeping auth state')
+        // Even if we just logged in, if the auth check fails, we should verify
+        // But give it a moment in case it's a temporary network issue
+        console.warn('[AuthContext] checkAuthStatus: Error occurred but justLoggedInRef is true - this may indicate a problem')
       }
     } finally {
       authCheckRequestRef.current = null
+      // CRITICAL: Always set loading to false so ProtectedRoute can make a decision
+      // If isAuthenticated is false, ProtectedRoute will redirect to login
       setIsLoading(false)
     }
   }
