@@ -16,6 +16,7 @@ const { EventBus } = require('./infrastructure/EventBus');
 
 // Command Handlers
 const BlogPostCommandHandlers = require('./application/commandHandlers/BlogPostCommandHandlers');
+const AnalyticsCommandHandlers = require('./application/commandHandlers/AnalyticsCommandHandlers');
 
 // Query Handlers
 const BlogPostQueryHandlers = require('./application/queryHandlers/BlogPostQueryHandlers');
@@ -66,6 +67,7 @@ class Server {
     // Handlers
     this.blogPostCommandHandlers = null;
     this.blogPostQueryHandlers = null;
+    this.analyticsCommandHandlers = null;
     
     // Projections
     this.blogPostProjection = null;
@@ -236,6 +238,7 @@ class Server {
     // Initialize handlers
     this.blogPostCommandHandlers = new BlogPostCommandHandlers(this.eventStore, this.eventBus);
     this.blogPostQueryHandlers = new BlogPostQueryHandlers(this.readModelStore);
+    this.analyticsCommandHandlers = new AnalyticsCommandHandlers(this.eventStore, this.eventBus);
 
     // Initialize projections
     this.blogPostProjection = new BlogPostProjection(this.readModelStore);
@@ -245,6 +248,10 @@ class Server {
 
   setupMiddleware() {
     logger.info('Setting up middleware...');
+
+    // Trust proxy - Required for Railway and other cloud platforms that use reverse proxies
+    // This allows Express to correctly identify client IPs from X-Forwarded-For headers
+    this.app.set('trust proxy', true);
 
     // Performance monitoring (should be early in the middleware chain)
     this.app.use(performanceMonitor.middleware());
@@ -380,6 +387,12 @@ class Server {
       this.blogPostCommandHandlers.handleRemoveTagFromBlogPost.bind(this.blogPostCommandHandlers));
     this.commandBus.registerHandler('GenerateBlogPost', 
       this.blogPostCommandHandlers.handleGenerateBlogPost.bind(this.blogPostCommandHandlers));
+
+    // Register analytics command handlers
+    this.commandBus.registerHandler('TrackPageView', 
+      this.analyticsCommandHandlers.handleTrackPageView.bind(this.analyticsCommandHandlers));
+    this.commandBus.registerHandler('TrackUserEngagement', 
+      this.analyticsCommandHandlers.handleTrackUserEngagement.bind(this.analyticsCommandHandlers));
 
     // Register query handlers
     this.queryBus.registerHandler('GetBlogPostById', 
