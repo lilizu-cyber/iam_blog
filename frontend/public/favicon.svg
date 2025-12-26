@@ -1,5 +1,23 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-  <rect width="100" height="100" fill="#0ea5e9"/>
-  <text x="50" y="70" font-family="Arial, sans-serif" font-size="60" font-weight="bold" fill="white" text-anchor="middle">IAM</text>
+  <!-- Blue square background matching the IAM logo -->
+  <rect width="100" height="100" fill="#0ea5e9" rx="4"/>
+  
+  <!-- IAM Text - Sans-serif, bold, connected design -->
+  <g fill="white" font-family="'Arial', 'Helvetica', sans-serif" font-weight="700" font-size="48">
+    <!-- Letter I -->
+    <text x="15" y="68">I</text>
+    
+    <!-- Letter A (connected to I at top) -->
+    <text x="38" y="68">A</text>
+    
+    <!-- Letter M (with horizontal bar) -->
+    <text x="58" y="68">M</text>
+  </g>
+  
+  <!-- Horizontal connecting bar across I and A -->
+  <rect x="12" y="22" width="32" height="5" fill="white" rx="1"/>
+  
+  <!-- Horizontal bar for M -->
+  <rect x="55" y="22" width="30" height="5" fill="white" rx="1"/>
 </svg>
 
