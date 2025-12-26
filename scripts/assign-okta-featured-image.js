@@ -8,10 +8,11 @@ require('dotenv').config();
 const { ReadModelStore } = require('../src/backend/infrastructure/ReadModelStore');
 const logger = require('../src/backend/utils/logger');
 
-// Okta featured image configuration
+// Default featured image configuration (replaces Okta-specific image)
+// Using the same default images as other posts
 const OKTA_FEATURED_IMAGE = {
-  url: '/images/okta-featured-image.png', // Update this path after saving the image
-  alt: 'Okta Identity and Access Management Platform',
+  url: '/images/cybersecurity-comprehensive-bg.jpg.png',
+  alt: 'Cybersecurity and Identity Management',
   width: 1200,
   height: 630
 };
@@ -101,4 +102,5 @@ if (require.main === module) {
 }
 
 module.exports = { assignOktaFeaturedImage, mentionsOkta, OKTA_FEATURED_IMAGE };
+
 

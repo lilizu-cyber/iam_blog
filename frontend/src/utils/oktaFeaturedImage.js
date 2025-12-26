@@ -3,10 +3,11 @@
  * to posts that mention "Okta"
  */
 
-// Okta featured image configuration
+// Default featured image configuration (replaces Okta-specific image)
+// Using the same default images as other posts
 export const OKTA_FEATURED_IMAGE = {
-  url: '/images/okta-featured-image.png',
-  alt: 'Okta Identity and Access Management Platform',
+  url: '/images/cybersecurity-comprehensive-bg.jpg.png',
+  alt: 'Cybersecurity and Identity Management',
   width: 1200,
   height: 630
 };
@@ -63,4 +64,5 @@ export function getFeaturedImageForPost(postData, currentFeaturedImage = null) {
   // Otherwise, return current featured image (or null)
   return currentFeaturedImage || null;
 }
+
 
