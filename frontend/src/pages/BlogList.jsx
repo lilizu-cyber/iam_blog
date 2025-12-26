@@ -304,30 +304,31 @@ export default function BlogList() {
                   >
                     <Link to={`/blog/${post.slug}`}>
                       {/* Featured Image */}
-                      {post.featuredImage ? (
-                        <div className="aspect-video overflow-hidden rounded-t-lg bg-gray-100 dark:bg-gray-700">
-                          <OptimizedImage
-                            src={post.featuredImage}
-                            alt={post.featuredImage.alt || post.title}
-                            size="medium"
-                            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                            lazy={true}
-                            aspectRatio="16/9"
-                          />
-                        </div>
-                      ) : (
-                        <div className="aspect-video flex items-center justify-center rounded-t-lg bg-gradient-to-br from-cyan-500 to-blue-600">
-                          {post.flags.isSecurityRelated ? (
-                            <ShieldCheckIcon className="h-16 w-16 text-white" />
-                          ) : post.flags.isIAMRelated ? (
-                            <KeyIcon className="h-16 w-16 text-white" />
-                          ) : (
-                            <div className="text-white text-2xl font-bold">
-                              {post.title.charAt(0)}
+                      {(() => {
+                        const imageUrl = post.featuredImage?.url || (typeof post.featuredImage === 'string' ? post.featuredImage : null);
+                        const isOktaImage = imageUrl && (imageUrl.includes('okta-featured-image.png') || imageUrl.includes('okta-featured-image'));
+                        
+                        if (isOktaImage || !post.featuredImage) {
+                          return (
+                            <div className="aspect-video flex items-center justify-center rounded-t-lg bg-gradient-to-br from-cyan-500 to-blue-600">
+                              <ShieldCheckIcon className="h-16 w-16 text-white" />
                             </div>
-                          )}
-                        </div>
-                      )}
+                          );
+                        }
+                        
+                        return (
+                          <div className="aspect-video overflow-hidden rounded-t-lg bg-gray-100 dark:bg-gray-700">
+                            <OptimizedImage
+                              src={post.featuredImage}
+                              alt={post.featuredImage.alt || post.title}
+                              size="medium"
+                              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                              lazy={true}
+                              aspectRatio="16/9"
+                            />
+                          </div>
+                        );
+                      })()}
 
                       <div className="p-6">
                         {/* Tags */}

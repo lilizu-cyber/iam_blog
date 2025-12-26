@@ -8,7 +8,8 @@ import {
   CalendarIcon,
   UserIcon,
   ShareIcon,
-  BookmarkIcon
+  BookmarkIcon,
+  ShieldCheckIcon
 } from '@heroicons/react/24/outline'
 import { formatRelativeTime, formatAbsoluteTime } from '../utils/dateUtils'
 // Note: We're using HTML rendering instead of Markdown since ReactQuill outputs HTML
@@ -230,21 +231,33 @@ export default function BlogPost() {
       <article className="bg-white dark:bg-gray-900 min-h-screen">
         {/* Hero Section */}
         <div className="relative">
-          {post.featuredImage ? (
-            <div className="aspect-[21/9] overflow-hidden bg-gray-100 dark:bg-gray-800 relative">
-              <OptimizedImage
-                src={post.featuredImage}
-                alt={post.featuredImage.alt || post.title}
-                size="large"
-                className="h-full w-full object-cover"
-                lazy={false}
-                aspectRatio="21/9"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-            </div>
-          ) : (
-            <div className="aspect-[21/9] bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800" />
-          )}
+          {(() => {
+            const imageUrl = post.featuredImage?.url || (typeof post.featuredImage === 'string' ? post.featuredImage : null);
+            const isOktaImage = imageUrl && (imageUrl.includes('okta-featured-image.png') || imageUrl.includes('okta-featured-image'));
+            
+            if (isOktaImage || !post.featuredImage) {
+              return (
+                <div className="aspect-[21/9] bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center relative">
+                  <ShieldCheckIcon className="h-32 w-32 text-white opacity-80" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                </div>
+              );
+            }
+            
+            return (
+              <div className="aspect-[21/9] overflow-hidden bg-gray-100 dark:bg-gray-800 relative">
+                <OptimizedImage
+                  src={post.featuredImage}
+                  alt={post.featuredImage.alt || post.title}
+                  size="large"
+                  className="h-full w-full object-cover"
+                  lazy={false}
+                  aspectRatio="21/9"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+              </div>
+            );
+          })()}
           
           {/* Article Header Overlay */}
           <div className="absolute inset-0 flex items-end">

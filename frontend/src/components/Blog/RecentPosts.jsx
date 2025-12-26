@@ -92,32 +92,31 @@ export default function RecentPosts() {
                 <Link to={`/blog/${post.slug}`} className="flex flex-col sm:flex-row w-full">
                   {/* Image */}
                   <div className="sm:w-48 flex-shrink-0">
-                    {post.featuredImage ? (
-                      <div className="aspect-video sm:aspect-square overflow-hidden rounded-t-lg sm:rounded-l-lg sm:rounded-t-none bg-gray-100 dark:bg-gray-700">
-                        <OptimizedImage
-                          src={post.featuredImage}
-                          alt={post.featuredImage.alt || post.title}
-                          size="small"
-                          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                          lazy={true}
-                          aspectRatio="16/9"
-                        />
-                      </div>
-                    ) : (
-                      <div className="aspect-video sm:aspect-square flex items-center justify-center rounded-t-lg sm:rounded-l-lg sm:rounded-t-none bg-gradient-to-br from-cyan-500 to-blue-600">
-                        {post.category?.id === 'security' || post.flags.isSecurityRelated ? (
-                          <ShieldCheckIcon className="h-12 w-12 text-white" />
-                        ) : post.category?.id === 'iam' || post.flags.isIAMRelated ? (
-                          <KeyIcon className="h-12 w-12 text-white" />
-                        ) : post.category?.id === 'ai' ? (
-                          <CpuChipIcon className="h-12 w-12 text-white" />
-                        ) : (
-                          <div className="text-white text-xl font-bold">
-                            {post.title.charAt(0)}
+                    {(() => {
+                      const imageUrl = post.featuredImage?.url || (typeof post.featuredImage === 'string' ? post.featuredImage : null);
+                      const isOktaImage = imageUrl && (imageUrl.includes('okta-featured-image.png') || imageUrl.includes('okta-featured-image'));
+                      
+                      if (isOktaImage || !post.featuredImage) {
+                        return (
+                          <div className="aspect-video sm:aspect-square flex items-center justify-center rounded-t-lg sm:rounded-l-lg sm:rounded-t-none bg-gradient-to-br from-cyan-500 to-blue-600">
+                            <ShieldCheckIcon className="h-12 w-12 text-white" />
                           </div>
-                        )}
-                      </div>
-                    )}
+                        );
+                      }
+                      
+                      return (
+                        <div className="aspect-video sm:aspect-square overflow-hidden rounded-t-lg sm:rounded-l-lg sm:rounded-t-none bg-gray-100 dark:bg-gray-700">
+                          <OptimizedImage
+                            src={post.featuredImage}
+                            alt={post.featuredImage.alt || post.title}
+                            size="small"
+                            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                            lazy={true}
+                            aspectRatio="16/9"
+                          />
+                        </div>
+                      );
+                    })()}
                   </div>
 
                   {/* Content */}
