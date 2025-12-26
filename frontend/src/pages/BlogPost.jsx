@@ -8,8 +8,7 @@ import {
   CalendarIcon,
   UserIcon,
   ShareIcon,
-  BookmarkIcon,
-  ShieldCheckIcon
+  BookmarkIcon
 } from '@heroicons/react/24/outline'
 import { formatRelativeTime, formatAbsoluteTime } from '../utils/dateUtils'
 // Note: We're using HTML rendering instead of Markdown since ReactQuill outputs HTML
@@ -237,8 +236,7 @@ export default function BlogPost() {
             
             if (isOktaImage || !post.featuredImage) {
               return (
-                <div className="aspect-[21/9] bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center relative">
-                  <ShieldCheckIcon className="h-32 w-32 text-white opacity-80" />
+                <div className="aspect-[21/9] bg-gradient-to-br from-cyan-500 to-blue-600 relative">
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                 </div>
               );
