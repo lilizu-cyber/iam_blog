@@ -250,8 +250,10 @@ class Server {
     logger.info('Setting up middleware...');
 
     // Trust proxy - Required for Railway and other cloud platforms that use reverse proxies
+    // Trust only the first proxy (Railway's reverse proxy) to prevent IP spoofing
     // This allows Express to correctly identify client IPs from X-Forwarded-For headers
-    this.app.set('trust proxy', true);
+    // Setting to 1 means we trust only the first proxy, which is more secure than 'true'
+    this.app.set('trust proxy', 1);
 
     // Performance monitoring (should be early in the middleware chain)
     this.app.use(performanceMonitor.middleware());

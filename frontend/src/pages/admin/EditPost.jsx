@@ -529,6 +529,54 @@ export default function EditPost() {
     }
   }
 
+  // Calculate word count from HTML content
+  const getWordCount = (htmlContent) => {
+    if (!htmlContent) return 0
+    
+    try {
+      // Create a temporary DOM element to parse HTML
+      const tempDiv = document.createElement('div')
+      tempDiv.innerHTML = htmlContent
+      
+      // Get text content (strips HTML tags)
+      const text = tempDiv.textContent || tempDiv.innerText || ''
+      
+      // Remove extra whitespace and split into words
+      const words = text.trim().split(/\s+/).filter(word => word.length > 0)
+      
+      return words.length
+    } catch (error) {
+      // Fallback: simple regex-based word count
+      const text = htmlContent.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
+      return text ? text.split(/\s+/).length : 0
+    }
+  }
+
+  // Calculate character count (without HTML tags)
+  const getCharacterCount = (htmlContent) => {
+    if (!htmlContent) return 0
+    
+    try {
+      const tempDiv = document.createElement('div')
+      tempDiv.innerHTML = htmlContent
+      const text = tempDiv.textContent || tempDiv.innerText || ''
+      return text.length
+    } catch (error) {
+      // Fallback: simple regex-based character count
+      return htmlContent.replace(/<[^>]*>/g, '').length
+    }
+  }
+
+  // Get current word and character counts (memoized for performance)
+  const wordCount = useMemo(() => getWordCount(formData.content), [formData.content])
+  const characterCount = useMemo(() => getCharacterCount(formData.content), [formData.content])
+  
+  // Calculate reading time (average reading speed: 200 words per minute)
+  const readingTime = useMemo(() => {
+    if (wordCount === 0) return 0
+    return Math.ceil(wordCount / 200)
+  }, [wordCount])
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-white dark:bg-gray-900 flex items-center justify-center">
@@ -684,9 +732,28 @@ export default function EditPost() {
                       }}
                     />
                   </div>
-                  <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                    Use the toolbar to format your content. Add code blocks, lists, images, and more.
-                  </p>
+                  <div className="mt-2 flex items-center justify-between">
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      Use the toolbar to format your content. Add code blocks, lists, images, and more.
+                    </p>
+                    <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
+                      <span className="font-medium">
+                        <span className="text-primary-600 dark:text-primary-400">{wordCount.toLocaleString()}</span> words
+                      </span>
+                      <span className="text-gray-400 dark:text-gray-500">•</span>
+                      <span>
+                        <span className="text-primary-600 dark:text-primary-400">{characterCount.toLocaleString()}</span> characters
+                      </span>
+                      {readingTime > 0 && (
+                        <>
+                          <span className="text-gray-400 dark:text-gray-500">•</span>
+                          <span>
+                            ~<span className="text-primary-600 dark:text-primary-400">{readingTime}</span> min read
+                          </span>
+                        </>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
