@@ -80,8 +80,8 @@ export default function CookieConsent() {
             
             {!showDetails ? (
               <p className="text-sm text-gray-600 dark:text-gray-300">
-                We use cookies to enhance your browsing experience, analyze site traffic, and personalize content. 
-                By clicking "Accept All", you consent to our use of cookies.{' '}
+                We use cookies to enhance your browsing experience, analyze site traffic, and display personalized advertisements 
+                through Google AdSense. By clicking "Accept All", you consent to our use of cookies and third-party advertising services.{' '}
                 <Link to="/cookies" className="text-primary-600 dark:text-primary-400 hover:underline">
                   Learn more
                 </Link>
@@ -130,7 +130,8 @@ export default function CookieConsent() {
                         </label>
                       </div>
                       <p className="text-xs text-gray-500 dark:text-gray-400 ml-6 mt-1">
-                        Help us understand how visitors interact with our website by collecting and reporting information anonymously.
+                        Help us understand how visitors interact with our website by collecting and reporting information anonymously. 
+                        This includes Google AdSense cookies used for personalized advertising.
                       </p>
                     </div>
                   </div>
@@ -211,4 +212,10 @@ export default function CookieConsent() {
     </div>
   )
 }
+
+
+
+
+
+
 

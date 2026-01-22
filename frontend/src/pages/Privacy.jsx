@@ -45,6 +45,61 @@ export default function Privacy() {
 
             <section className="mb-8">
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white mt-8 mb-4">
+                Third-Party Services and Advertising
+              </h2>
+              <p className="text-gray-700 dark:text-gray-300 mb-4">
+                We use Google AdSense to serve advertisements on our website. Google AdSense is a third-party advertising service 
+                provided by Google LLC that uses cookies and similar technologies to:
+              </p>
+              <ul className="list-disc list-inside mb-4 ml-0 pl-4 text-left">
+                <li className="text-gray-700 dark:text-gray-300 mb-2">Display personalized advertisements based on your interests and browsing behavior</li>
+                <li className="text-gray-700 dark:text-gray-300 mb-2">Measure the effectiveness of advertisements</li>
+                <li className="text-gray-700 dark:text-gray-300 mb-2">Collect information about your interactions with ads and websites</li>
+              </ul>
+              <p className="text-gray-700 dark:text-gray-300 mb-4">
+                Google AdSense may collect information such as your IP address, browser type, device information, and browsing patterns. 
+                This information is used to show you relevant ads and to help advertisers understand the effectiveness of their campaigns.
+              </p>
+              <p className="text-gray-700 dark:text-gray-300 mb-4">
+                Google's use of advertising cookies enables it and its partners to serve ads to you based on your visit to our site 
+                and/or other sites on the Internet. You may opt out of personalized advertising by visiting{' '}
+                <a 
+                  href="https://www.google.com/settings/ads" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-primary-600 dark:text-primary-400 hover:underline"
+                >
+                  Google's Ads Settings
+                </a>
+                {' '}or{' '}
+                <a 
+                  href="https://www.aboutads.info/choices/" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-primary-600 dark:text-primary-400 hover:underline"
+                >
+                  www.aboutads.info
+                </a>.
+              </p>
+              <p className="text-gray-700 dark:text-gray-300 mb-4">
+                For more information about how Google uses data when you use our site, please visit{' '}
+                <a 
+                  href="https://policies.google.com/technologies/partner-sites" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-primary-600 dark:text-primary-400 hover:underline"
+                >
+                  Google's Privacy & Terms
+                </a>.
+              </p>
+              <p className="text-gray-700 dark:text-gray-300 mb-4">
+                <strong>Important:</strong> Google AdSense will only be loaded after you have provided your consent through our 
+                cookie consent banner. You can withdraw your consent at any time by managing your cookie preferences.
+              </p>
+            </section>
+
+            <section className="mb-8">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mt-8 mb-4">
                 How We Use Your Information
               </h2>
               <p className="text-gray-700 dark:text-gray-300 mb-4">
@@ -97,6 +152,12 @@ export default function Privacy() {
     </>
   )
 }
+
+
+
+
+
+
 
 
 

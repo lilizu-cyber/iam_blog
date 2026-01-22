@@ -121,10 +121,46 @@ export default function Cookies() {
                 Third-Party Services
               </h2>
               <p className="text-gray-700 dark:text-gray-300 mb-4">
-                Currently, we do not use third-party analytics services (such as Google Analytics). 
-                All analytics data is collected and processed by our own servers. If we add third-party services in the future, 
-                we will update this policy and provide you with the option to opt-out.
+                We use the following third-party services that may set cookies on your device:
               </p>
+              
+              <div className="mb-4">
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mt-6 mb-3">
+                  Google AdSense
+                </h3>
+                <p className="text-gray-700 dark:text-gray-300 mb-4">
+                  We use Google AdSense to display advertisements on our website. Google AdSense uses cookies to:
+                </p>
+                <ul className="list-disc list-inside mb-4 ml-0 pl-4 text-left">
+                  <li className="text-gray-700 dark:text-gray-300 mb-2">Display personalized ads based on your interests</li>
+                  <li className="text-gray-700 dark:text-gray-300 mb-2">Measure ad performance and effectiveness</li>
+                  <li className="text-gray-700 dark:text-gray-300 mb-2">Prevent fraud and abuse</li>
+                  <li className="text-gray-700 dark:text-gray-300 mb-2">Collect information about your interactions with ads</li>
+                </ul>
+                <p className="text-gray-700 dark:text-gray-300 mb-4">
+                  Google AdSense cookies are considered analytics/advertising cookies and will only be set if you consent to 
+                  analytics cookies through our cookie consent banner. You can learn more about how Google uses cookies by visiting{' '}
+                  <a 
+                    href="https://policies.google.com/technologies/cookies" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-primary-600 dark:text-primary-400 hover:underline"
+                  >
+                    Google's Cookie Policy
+                  </a>.
+                </p>
+                <p className="text-gray-700 dark:text-gray-300 mb-4">
+                  To opt out of personalized advertising from Google, you can visit{' '}
+                  <a 
+                    href="https://www.google.com/settings/ads" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-primary-600 dark:text-primary-400 hover:underline"
+                  >
+                    Google's Ads Settings
+                  </a>.
+                </p>
+              </div>
             </section>
 
             <section className="mb-8">

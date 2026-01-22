@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { canUseAnalytics } from '../../utils/cookieConsent'
 
 /**
@@ -26,10 +26,29 @@ export default function GoogleAdSense({
   className = '',
   responsive = true 
 }) {
+  const [hasConsentState, setHasConsentState] = useState(() => canUseAnalytics())
+
+  useEffect(() => {
+    // Check consent on mount
+    setHasConsentState(canUseAnalytics())
+
+    // Listen for consent events
+    const handleConsentChange = (event) => {
+      if (event.detail?.analytics) {
+        setHasConsentState(true)
+      }
+    }
+
+    window.addEventListener('cookieConsentGiven', handleConsentChange)
+
+    return () => {
+      window.removeEventListener('cookieConsentGiven', handleConsentChange)
+    }
+  }, [])
+
   useEffect(() => {
     // Only load AdSense if user has consented to analytics
-    const hasConsent = canUseAnalytics()
-    if (!hasConsent) {
+    if (!hasConsentState) {
       console.log('[AdSense] User has not consented to analytics - AdSense not loaded')
       return
     }
@@ -93,11 +112,10 @@ export default function GoogleAdSense({
     return () => {
       // Cleanup if needed
     }
-  }, [adSlot])
+  }, [adSlot, hasConsentState])
 
   // Don't render if no consent
-  const hasConsent = canUseAnalytics()
-  if (!hasConsent || !GOOGLE_ADSENSE_CLIENT_ID || !adSlot) {
+  if (!hasConsentState || !GOOGLE_ADSENSE_CLIENT_ID || !adSlot) {
     return null
   }
 
@@ -180,4 +198,9 @@ export function BannerAd({ adSlot, className = '' }) {
     />
   )
 }
+
+
+
+
+
 
