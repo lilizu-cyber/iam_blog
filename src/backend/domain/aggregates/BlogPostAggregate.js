@@ -8,6 +8,7 @@ const {
   TagAddedToBlogPostEvent,
   TagRemovedFromBlogPostEvent
 } = require('../events/BlogEvents');
+const site = require('../../config/site');
 
 class BlogPostAggregate {
   constructor() {
@@ -76,8 +77,8 @@ class BlogPostAggregate {
       content,
       excerpt: excerpt || this.generateExcerpt(content),
       authorId,
-      authorName: authorName || 'Admin',
-      authorEmail: authorEmail || 'admin@example.com',
+      authorName: authorName || site.authorName,
+      authorEmail: authorEmail || site.authorEmail,
       categoryId,
       tags,
       attachments,

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Helmet } from 'react-helmet-async'
 import AdminHeader from '../../components/Admin/AdminHeader'
+import { siteConfig } from '../../config/site'
 import { Link } from 'react-router-dom'
 import { PlusIcon, PencilIcon, EyeIcon, TrashIcon, ArrowPathIcon } from '@heroicons/react/24/outline'
 import { useQuery, useMutation, useQueryClient } from 'react-query'
@@ -87,7 +88,8 @@ export default function ManagePosts() {
     }
   }
 
-  const formatDate = (date) => {
+  const formatDate = (post) => {
+    const date = post.publishedAt || (post.status === 'published' ? post.createdAt : null)
     if (!date) return 'Not published'
     return new Date(date).toLocaleDateString()
   }
@@ -240,10 +242,10 @@ export default function ManagePosts() {
                           {getStatusBadge(post.status)}
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
-                          {post.author?.name || 'Admin'}
+                          {post.author?.name || siteConfig.authorName}
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
-                          {formatDate(post.publishedAt)}
+                          {formatDate(post)}
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
                           {post.viewCount?.toLocaleString() || 0}

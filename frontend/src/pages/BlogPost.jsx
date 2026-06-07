@@ -10,7 +10,8 @@ import {
   ShareIcon,
   BookmarkIcon
 } from '@heroicons/react/24/outline'
-import { formatRelativeTime, formatAbsoluteTime } from '../utils/dateUtils'
+import { formatRelativeTime, formatAbsoluteTime, getPostDisplayDate } from '../utils/dateUtils'
+import { siteConfig } from '../config/site'
 // Note: We're using HTML rendering instead of Markdown since ReactQuill outputs HTML
 // The backend sanitizes the HTML content, so it's safe to render
 import { blogApi } from '../services/api'
@@ -19,6 +20,8 @@ import ErrorMessage from '../components/UI/ErrorMessage'
 import OptimizedImage from '../components/UI/OptimizedImage'
 import { trackEvents } from '../services/analytics'
 import toast from 'react-hot-toast'
+import { InArticleAd, SidebarAd } from '../components/Ads/GoogleAdSense'
+import { adsConfig } from '../config/ads'
 
 export default function BlogPost() {
   const { slug } = useParams()
@@ -64,6 +67,8 @@ export default function BlogPost() {
   const post = response.data
   const postUrl = `${window.location.origin}/blog/${post.slug}`
   const siteUrl = window.location.origin
+  const displayDate = getPostDisplayDate(post.timestamps)
+  const authorName = post.author.name === 'Admin' ? siteConfig.authorName : (post.author.name || siteConfig.authorName)
 
   // Handle share functionality
   const handleShare = async () => {
@@ -110,11 +115,11 @@ export default function BlogPost() {
     "headline": post.title,
     "description": post.seo.description || post.excerpt,
     "image": post.featuredImage ? post.featuredImage.url : `${siteUrl}/og-image.jpg`,
-    "datePublished": post.timestamps.publishedAt,
-    "dateModified": post.timestamps.updatedAt || post.timestamps.publishedAt,
+    "datePublished": displayDate,
+    "dateModified": post.timestamps.updatedAt || displayDate,
     "author": {
       "@type": "Person",
-      "name": post.author.name,
+      "name": authorName,
       "email": post.author.email,
       ...(post.author.avatar && { "image": post.author.avatar })
     },
@@ -192,9 +197,9 @@ export default function BlogPost() {
         <meta property="og:locale" content="en_US" />
         
         {/* Article specific Open Graph */}
-        <meta property="article:published_time" content={post.timestamps.publishedAt} />
-        <meta property="article:modified_time" content={post.timestamps.updatedAt || post.timestamps.publishedAt} />
-        <meta property="article:author" content={post.author.name} />
+        <meta property="article:published_time" content={displayDate} />
+        <meta property="article:modified_time" content={post.timestamps.updatedAt || displayDate} />
+        <meta property="article:author" content={authorName} />
         <meta property="article:section" content={post.category?.name || "Cybersecurity"} />
         {post.tags.map(tag => (
           <meta key={tag} property="article:tag" content={tag} />
@@ -212,8 +217,8 @@ export default function BlogPost() {
         <meta name="twitter:site" content="@cybersec_iam" />
         
         {/* Additional SEO meta tags */}
-        <meta name="author" content={post.author.name} />
-        <meta name="article:author" content={post.author.name} />
+        <meta name="author" content={authorName} />
+        <meta name="article:author" content={authorName} />
         <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
         <meta name="googlebot" content="index, follow" />
         <meta name="bingbot" content="index, follow" />
@@ -290,11 +295,11 @@ export default function BlogPost() {
                 <div className="mt-8 flex flex-wrap items-center gap-6 text-gray-300">
                   <div className="flex items-center">
                     <UserIcon className="h-5 w-5 mr-2" />
-                    <span>{post.author.name}</span>
+                    <span>{authorName}</span>
                   </div>
                   <div className="flex items-center">
                     <CalendarIcon className="h-5 w-5 mr-2" />
-                    <span>{formatAbsoluteTime(post.timestamps.publishedAt, 'MMMM d, yyyy')}</span>
+                    <span>{formatAbsoluteTime(displayDate, 'MMMM d, yyyy')}</span>
                   </div>
                   <div className="flex items-center">
                     <ClockIcon className="h-5 w-5 mr-2" />
@@ -328,12 +333,16 @@ export default function BlogPost() {
                 </div>
               )}
 
+              {adsConfig.slots.blogPostInArticle && (
+                <InArticleAd adSlot={adsConfig.slots.blogPostInArticle} />
+              )}
+
               {/* Article Footer */}
               <div className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-700">
                 <div className="flex items-center justify-between">
                   <div className="text-sm text-gray-500 dark:text-gray-400">
-                    Published {formatRelativeTime(post.timestamps.publishedAt)}
-                    {post.timestamps.updatedAt && post.timestamps.updatedAt !== post.timestamps.publishedAt && (
+                    Published {formatRelativeTime(displayDate)}
+                    {post.timestamps.updatedAt && post.timestamps.updatedAt !== displayDate && (
                       <span className="ml-2">
                         • Updated {formatRelativeTime(post.timestamps.updatedAt)}
                       </span>
@@ -361,6 +370,10 @@ export default function BlogPost() {
             {/* Sidebar */}
             <div className="lg:col-span-1">
               <div className="sticky top-8 space-y-8">
+                {adsConfig.slots.blogPostSidebar && (
+                  <SidebarAd adSlot={adsConfig.slots.blogPostSidebar} />
+                )}
+
                 {/* Author Info */}
                 <div className="card p-6">
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
@@ -370,17 +383,17 @@ export default function BlogPost() {
                     {post.author.avatar ? (
                       <img
                         src={post.author.avatar}
-                        alt={post.author.name}
+                        alt={authorName}
                         className="h-12 w-12 rounded-full"
                       />
                     ) : (
                       <div className="h-12 w-12 rounded-full bg-primary-600 flex items-center justify-center text-white font-semibold">
-                        {post.author.name.charAt(0)}
+                        {authorName.charAt(0)}
                       </div>
                     )}
                     <div>
                       <div className="font-medium text-gray-900 dark:text-white">
-                        {post.author.name}
+                        {authorName}
                       </div>
                       <div className="text-sm text-gray-500 dark:text-gray-400">
                         Security Expert

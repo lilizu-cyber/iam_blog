@@ -108,37 +108,37 @@
   
   /* Card variants */
   .card {
-    @apply bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700;
+    @apply rounded-sm border border-[#00FBFF]/15 bg-black/50 backdrop-blur-sm;
   }
   
   .card-hover {
-    @apply card transition-all duration-200 hover:shadow-md hover:border-gray-300 dark:hover:border-gray-600;
+    @apply card transition-all duration-200 hover:border-[#00FBFF]/40 hover:shadow-[0_0_20px_rgba(0,251,255,0.12)];
   }
   
   /* Input styles */
   .input {
-    @apply block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500;
+    @apply block w-full rounded-sm border border-[#00FBFF]/25 bg-black/50 px-3 py-2 text-white shadow-sm placeholder-white/40 backdrop-blur-sm focus:border-[#00FBFF] focus:outline-none focus:ring-1 focus:ring-[#00FBFF]/50;
   }
   
   /* Badge variants */
   .badge {
-    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+    @apply inline-flex items-center rounded-sm px-2.5 py-0.5 text-xs font-medium;
   }
   
   .badge-primary {
-    @apply badge bg-primary-100 text-primary-800 dark:bg-primary-900 dark:text-primary-200;
+    @apply badge border border-[#00FBFF]/30 bg-[#00FBFF]/10 text-[#00FBFF];
   }
   
   .badge-security {
-    @apply badge bg-security-100 text-security-800 dark:bg-security-900 dark:text-security-200;
+    @apply badge border border-red-400/30 bg-red-500/10 text-red-300;
   }
   
   .badge-iam {
-    @apply badge bg-iam-100 text-iam-800 dark:bg-iam-900 dark:text-iam-200;
+    @apply badge border border-emerald-400/30 bg-emerald-500/10 text-emerald-300;
   }
   
   .badge-gray {
-    @apply badge bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200;
+    @apply badge border border-white/20 bg-white/5 text-white/70;
   }
   
   /* Loading spinner */
@@ -553,4 +553,54 @@
 
 .blog-content th {
   @apply bg-gray-100 dark:bg-gray-800 font-bold;
+}
+
+/* Cyber grid hero */
+.grid-logo-glow {
+  text-shadow:
+    0 0 8px rgba(0, 251, 255, 0.9),
+    0 0 20px rgba(0, 251, 255, 0.55),
+    0 0 36px rgba(0, 251, 255, 0.35);
+}
+
+.grid-hero-title-glow {
+  text-shadow:
+    0 0 12px rgba(0, 251, 255, 0.45),
+    0 0 28px rgba(0, 251, 255, 0.25),
+    0 0 48px rgba(0, 251, 255, 0.12);
+}
+
+.grid-hero-cta {
+  box-shadow:
+    0 0 12px rgba(0, 251, 255, 0.35),
+    inset 0 0 12px rgba(0, 251, 255, 0.05);
+}
+
+.grid-hero-cta:hover {
+  box-shadow:
+    0 0 18px rgba(0, 251, 255, 0.55),
+    inset 0 0 16px rgba(0, 251, 255, 0.08);
+}
+
+.grid-prose {
+  @apply text-white/80;
+}
+
+.grid-prose h1,
+.grid-prose h2,
+.grid-prose h3,
+.grid-prose h4 {
+  @apply text-white grid-hero-title-glow;
+}
+
+.grid-prose a {
+  @apply text-[#00FBFF] hover:underline;
+}
+
+.grid-prose strong {
+  @apply text-white;
+}
+
+.grid-section-alt {
+  @apply border-y border-[#00FBFF]/10 bg-black/60;
 }

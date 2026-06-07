@@ -1,5 +1,6 @@
 const BlogPostAggregate = require('../../domain/aggregates/BlogPostAggregate');
 const logger = require('../../utils/logger');
+const site = require('../../config/site');
 const { CreateBlogPostCommand } = require('../../domain/commands/BlogCommands');
 
 // Lazy load OpenAI service to prevent startup crashes
@@ -500,8 +501,8 @@ class BlogPostCommandHandlers {
         tags: generatedData.tags,
         categoryId: generatedData.categoryId || categoryId || null,
         authorId: authorId,
-        authorName: authorName || 'Admin',
-        authorEmail: authorEmail || 'admin@example.com',
+        authorName: authorName || site.authorName,
+        authorEmail: authorEmail || site.authorEmail,
         seoTitle: generatedData.seoTitle,
         seoDescription: generatedData.seoDescription,
         featuredImage: null // Can be added later

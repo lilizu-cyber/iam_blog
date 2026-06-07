@@ -5,12 +5,14 @@ import {
   KeyIcon, 
   CpuChipIcon,
   ArrowRightIcon,
-  SparklesIcon
 } from '@heroicons/react/24/outline'
 import { motion } from 'framer-motion'
 import { useInView } from 'react-intersection-observer'
 
 // Components
+import Header from '../components/Layout/Header'
+import GridBackground from '../components/UI/GridBackground'
+import GridSection from '../components/UI/GridSection'
 import FeaturedPosts from '../components/Blog/FeaturedPosts'
 import RecentPosts from '../components/Blog/RecentPosts'
 import Newsletter from '../components/Newsletter/Newsletter'
@@ -129,65 +131,34 @@ export default function Home() {
         </script>
       </Helmet>
 
-      {/* Hero Section */}
-      <section className="relative overflow-hidden min-h-[600px] bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800">
-        {/* Background Image */}
-        <div className="absolute inset-0 bg-[url('/images/cybersecurity-comprehensive-bg.jpg.png')] bg-cover bg-center bg-no-repeat opacity-30"></div>
-        
-        {/* Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-r from-slate-900/80 via-blue-900/70 to-transparent"></div>
-        
-        <div className="relative mx-auto max-w-7xl px-4 py-24 sm:px-6 sm:py-32 lg:px-8">
+      {/* Hero Section — cyber grid */}
+      <section className="relative flex min-h-[92vh] flex-col overflow-hidden bg-black">
+        <GridBackground />
+        <Header variant="grid" overlay />
+
+        <div className="relative z-10 flex flex-1 flex-col items-center justify-center px-4 pb-20 pt-24 text-center sm:px-6 lg:px-8">
           <motion.div
             ref={heroRef}
-            initial={{ opacity: 0, y: 20 }}
-            animate={heroInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-            transition={{ duration: 0.8 }}
-            className="text-left max-w-3xl"
+            initial={{ opacity: 0, y: 24 }}
+            animate={heroInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 24 }}
+            transition={{ duration: 0.9 }}
+            className="mx-auto max-w-3xl"
           >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={heroInView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.8 }}
-              transition={{ duration: 0.8, delay: 0.2 }}
-              className="flex justify-start mb-8"
-            >
-              <div className="flex items-center space-x-4 p-4 bg-white/10 backdrop-blur-sm rounded-2xl shadow-lg border border-cyan-400/30">
-                <ShieldCheckIcon className="h-12 w-12 text-cyan-400" />
-                <SparklesIcon className="h-8 w-8 text-yellow-400" />
-                <KeyIcon className="h-10 w-10 text-blue-400" />
-              </div>
-            </motion.div>
-
-            <h1 className="text-4xl font-bold tracking-tight text-white sm:text-6xl lg:text-7xl">
-              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400">
-                Empowering your business
-              </span>
-              <span className="block text-white mt-2">
-                with Robust
-              </span>
-              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400 mt-2">
-                Cybersecurity Solutions
-              </span>
+            <h1 className="text-4xl font-semibold tracking-tight text-white sm:text-5xl lg:text-6xl grid-hero-title-glow">
+              Enter the Grid
             </h1>
-            
-            <p className="mt-6 max-w-2xl text-lg leading-8 text-gray-300">
-              Explore cutting-edge cybersecurity strategies, identity and access management best practices, 
-              and AI-powered security solutions. Stay ahead of threats with expert insights and practical guides.
+
+            <p className="mx-auto mt-6 max-w-2xl text-base leading-8 text-white/85 sm:text-lg">
+              Experience the next evolution of cybersecurity and identity management,
+              where access flows with unparalleled speed and security.
             </p>
-            
-            <div className="mt-10 flex items-start gap-x-6">
+
+            <div className="mt-10 flex justify-center">
               <Link
                 to="/blog"
-                className="inline-flex items-center px-8 py-4 text-lg font-semibold text-white bg-gradient-to-r from-cyan-500 to-blue-600 rounded-lg shadow-lg hover:from-cyan-600 hover:to-blue-700 transform hover:scale-105 transition-all duration-200"
+                className="grid-hero-cta inline-flex items-center rounded-sm border border-[#00FBFF] px-8 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-[#00FBFF] transition-all duration-200 hover:bg-[#00FBFF]/10"
               >
-                Explore Articles
-                <ArrowRightIcon className="ml-2 h-5 w-5" />
-              </Link>
-              <Link
-                to="/about"
-                className="inline-flex items-center px-8 py-4 text-lg font-semibold text-cyan-400 border-2 border-cyan-400 rounded-lg hover:bg-cyan-400 hover:text-slate-900 transition-all duration-200"
-              >
-                Learn More
+                Explore the Network
               </Link>
             </div>
           </motion.div>
@@ -195,7 +166,7 @@ export default function Home() {
       </section>
 
       {/* Features Section */}
-      <section className="py-24 bg-white dark:bg-gray-900">
+      <section className="border-y border-[#00FBFF]/10 bg-black py-24">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <motion.div
             ref={featuresRef}
@@ -204,10 +175,10 @@ export default function Home() {
             transition={{ duration: 0.8 }}
             className="text-center"
           >
-            <h2 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-4xl">
+            <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl grid-hero-title-glow">
               What You'll Discover
             </h2>
-            <p className="mt-4 text-lg text-gray-600 dark:text-gray-300">
+            <p className="mt-4 text-lg text-white/75">
               Comprehensive coverage of the most critical security topics
             </p>
           </motion.div>
@@ -224,24 +195,16 @@ export default function Home() {
                   to={feature.href}
                   className="group relative block p-8 card-hover hover-lift"
                 >
-                  <div className={`inline-flex rounded-lg p-3 ${
-                    feature.color === 'security' ? 'bg-security-100 dark:bg-security-900' :
-                    feature.color === 'iam' ? 'bg-iam-100 dark:bg-iam-900' :
-                    'bg-primary-100 dark:bg-primary-900'
-                  }`}>
-                    <feature.icon className={`h-6 w-6 ${
-                      feature.color === 'security' ? 'text-security-600 dark:text-security-400' :
-                      feature.color === 'iam' ? 'text-iam-600 dark:text-iam-400' :
-                      'text-primary-600 dark:text-primary-400'
-                    }`} />
+                  <div className="inline-flex rounded-sm border border-[#00FBFF]/20 bg-[#00FBFF]/10 p-3">
+                    <feature.icon className="h-6 w-6 text-[#00FBFF] transition-colors group-hover:text-[#00FBFF]" />
                   </div>
-                  <h3 className="mt-4 text-lg font-semibold text-gray-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
+                  <h3 className="mt-4 text-lg font-semibold text-white transition-colors group-hover:text-[#00FBFF]">
                     {feature.name}
                   </h3>
-                  <p className="mt-2 text-gray-600 dark:text-gray-300">
+                  <p className="mt-2 text-white/70">
                     {feature.description}
                   </p>
-                  <div className="mt-4 flex items-center text-sm font-medium text-primary-600 dark:text-primary-400 group-hover:text-primary-700 dark:group-hover:text-primary-300">
+                  <div className="mt-4 flex items-center text-sm font-medium text-white/70 transition-colors group-hover:text-[#00FBFF]">
                     Learn more
                     <ArrowRightIcon className="ml-1 h-4 w-4 group-hover:translate-x-1 transition-transform" />
                   </div>
@@ -253,7 +216,7 @@ export default function Home() {
       </section>
 
       {/* Stats Section */}
-      <section className="bg-gradient-to-r from-slate-900 via-blue-900 to-slate-800 py-16">
+      <GridSection>
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <motion.div
             ref={statsRef}
@@ -270,17 +233,17 @@ export default function Home() {
                 transition={{ duration: 0.8, delay: index * 0.1 }}
                 className="text-center"
               >
-                <div className="text-3xl font-bold text-white sm:text-4xl">
+                <div className="text-3xl font-bold text-[#00FBFF] sm:text-4xl grid-hero-title-glow">
                   {stat.value}
                 </div>
-                <div className="mt-1 text-primary-100">
+                <div className="mt-2 text-sm font-medium uppercase tracking-wider text-white/75">
                   {stat.name}
                 </div>
               </motion.div>
             ))}
           </motion.div>
         </div>
-      </section>
+      </GridSection>
 
       {/* Featured Posts */}
       <FeaturedPosts />

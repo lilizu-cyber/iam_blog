@@ -1,4 +1,5 @@
 import { Helmet } from 'react-helmet-async'
+import { siteConfig } from '../config/site'
 
 export default function Privacy() {
   return (
@@ -24,7 +25,8 @@ export default function Privacy() {
                 Introduction
               </h2>
               <p className="text-gray-700 dark:text-gray-300 mb-4">
-                This Privacy Policy describes how we collect, use, and protect your personal information 
+                This Privacy Policy describes how {siteConfig.siteName}, operated by{' '}
+                {siteConfig.authorName}, collects, uses, and protects your personal information
                 when you visit our blog and use our services.
               </p>
             </section>

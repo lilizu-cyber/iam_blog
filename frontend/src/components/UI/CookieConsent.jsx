@@ -201,9 +201,9 @@ export default function CookieConsent() {
           </div>
 
           <button
-            onClick={() => setShowBanner(false)}
+            onClick={rejectAll}
             className="ml-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-            aria-label="Close"
+            aria-label="Reject non-essential cookies and close"
           >
             <XMarkIcon className="h-5 w-5" />
           </button>

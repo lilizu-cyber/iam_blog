@@ -1,10 +1,9 @@
 import { useState } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { buildApiUrl } from '../utils/apiUrl'
-import { 
-  ChatBubbleLeftRightIcon
-} from '@heroicons/react/24/outline'
+import { ChatBubbleLeftRightIcon } from '@heroicons/react/24/outline'
 import toast from 'react-hot-toast'
+import PageHero from '../components/UI/PageHero'
 
 export default function Contact() {
   const [formData, setFormData] = useState({
@@ -59,39 +58,29 @@ export default function Contact() {
   return (
     <>
       <Helmet>
-        <title>Contact Us - CyberSec & IAM Blog</title>
+        <title>Contact Us - cyberiam</title>
         <meta name="description" content="Get in touch with our cybersecurity experts. We'd love to hear from you and answer any questions about security or IAM." />
       </Helmet>
 
-      <div className="bg-white dark:bg-gray-900">
-        {/* Hero */}
-        <div className="bg-gradient-to-r from-slate-900 via-blue-900 to-slate-800 py-16">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="text-center">
-              <ChatBubbleLeftRightIcon className="mx-auto h-16 w-16 text-white mb-6" />
-              <h1 className="text-4xl font-bold text-white sm:text-5xl">
-                Get In Touch
-              </h1>
-              <p className="mt-4 text-xl text-primary-100">
-                Have questions about cybersecurity or IAM? We're here to help.
-              </p>
-            </div>
-          </div>
-        </div>
+      <div className="min-h-screen bg-black">
+        <PageHero
+          icon={ChatBubbleLeftRightIcon}
+          title="Get In Touch"
+          subtitle="Have questions about cybersecurity or IAM? We're here to help."
+        />
 
-        {/* Contact Form & Info */}
-        <div className="py-24">
+        <div className="border-t border-[#00FBFF]/10 py-16 sm:py-24">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+            <div className="grid grid-cols-1 gap-12 lg:grid-cols-2">
               {/* Contact Form */}
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+              <div className="rounded-sm border border-[#00FBFF]/15 bg-black/50 p-6 backdrop-blur-sm sm:p-8">
+                <h2 className="mb-6 text-2xl font-semibold text-white grid-hero-title-glow">
                   Send us a message
                 </h2>
                 <form onSubmit={handleSubmit} className="space-y-6">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                     <div>
-                      <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      <label htmlFor="name" className="mb-2 block text-sm font-medium text-white/80">
                         Name
                       </label>
                       <input
@@ -106,7 +95,7 @@ export default function Contact() {
                       />
                     </div>
                     <div>
-                      <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      <label htmlFor="email" className="mb-2 block text-sm font-medium text-white/80">
                         Email
                       </label>
                       <input
@@ -121,9 +110,9 @@ export default function Contact() {
                       />
                     </div>
                   </div>
-                  
+
                   <div>
-                    <label htmlFor="subject" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <label htmlFor="subject" className="mb-2 block text-sm font-medium text-white/80">
                       Subject
                     </label>
                     <input
@@ -137,9 +126,9 @@ export default function Contact() {
                       placeholder="What's this about?"
                     />
                   </div>
-                  
+
                   <div>
-                    <label htmlFor="message" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <label htmlFor="message" className="mb-2 block text-sm font-medium text-white/80">
                       Message
                     </label>
                     <textarea
@@ -153,52 +142,49 @@ export default function Contact() {
                       placeholder="Tell us more about your question or feedback..."
                     />
                   </div>
-                  
+
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="grid-hero-cta w-full rounded-sm border border-[#00FBFF] bg-transparent px-6 py-3 text-sm font-semibold uppercase tracking-wider text-[#00FBFF] transition-all duration-200 hover:bg-[#00FBFF]/10 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {isSubmitting ? 'Sending...' : 'Send Message'}
                   </button>
                 </form>
               </div>
 
-              {/* Contact Info */}
+              {/* FAQ */}
               <div>
-                {/* FAQ */}
-                <div className="mt-12">
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-                    Frequently Asked Questions
-                  </h3>
-                  <div className="space-y-4">
-                    <div>
-                      <h4 className="font-medium text-gray-900 dark:text-white">
-                        Can I contribute articles?
-                      </h4>
-                      <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
-                        Yes! We welcome guest contributions from security professionals. 
-                        Please reach out with your article ideas.
-                      </p>
-                    </div>
-                    <div>
-                      <h4 className="font-medium text-gray-900 dark:text-white">
-                        Do you offer consulting services?
-                      </h4>
-                      <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
-                        We can connect you with our network of security experts for 
-                        consulting opportunities.
-                      </p>
-                    </div>
-                    <div>
-                      <h4 className="font-medium text-gray-900 dark:text-white">
-                        How can I stay updated?
-                      </h4>
-                      <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
-                        Subscribe to our newsletter for weekly security insights and 
-                        follow us on social media.
-                      </p>
-                    </div>
+                <h3 className="mb-6 text-lg font-semibold text-white grid-hero-title-glow">
+                  Frequently Asked Questions
+                </h3>
+                <div className="space-y-4">
+                  <div className="rounded-sm border border-[#00FBFF]/15 bg-black/40 p-5 backdrop-blur-sm">
+                    <h4 className="font-medium text-[#00FBFF]">
+                      Can I contribute articles?
+                    </h4>
+                    <p className="mt-2 text-sm text-white/70">
+                      Yes! We welcome guest contributions from security professionals.
+                      Please reach out with your article ideas.
+                    </p>
+                  </div>
+                  <div className="rounded-sm border border-[#00FBFF]/15 bg-black/40 p-5 backdrop-blur-sm">
+                    <h4 className="font-medium text-[#00FBFF]">
+                      Do you offer consulting services?
+                    </h4>
+                    <p className="mt-2 text-sm text-white/70">
+                      We can connect you with our network of security experts for
+                      consulting opportunities.
+                    </p>
+                  </div>
+                  <div className="rounded-sm border border-[#00FBFF]/15 bg-black/40 p-5 backdrop-blur-sm">
+                    <h4 className="font-medium text-[#00FBFF]">
+                      How can I stay updated?
+                    </h4>
+                    <p className="mt-2 text-sm text-white/70">
+                      Subscribe to our newsletter for weekly security insights and
+                      follow us on social media.
+                    </p>
                   </div>
                 </div>
               </div>

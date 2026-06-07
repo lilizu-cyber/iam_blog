@@ -1,4 +1,5 @@
 const logger = require('../../utils/logger');
+const site = require('../../config/site');
 
 class BlogPostQueryHandlers {
   constructor(readModelStore) {
@@ -709,8 +710,8 @@ class BlogPostQueryHandlers {
       slug: post.slug,
       author: {
         id: post.authorId,
-        name: post.authorName,
-        email: post.authorEmail,
+        name: post.authorName || site.authorName,
+        email: post.authorEmail || site.authorEmail,
         avatar: post.authorAvatar
       },
       category: post.categoryId ? {
@@ -741,7 +742,7 @@ class BlogPostQueryHandlers {
       timestamps: {
         createdAt: post.createdAt,
         updatedAt: post.updatedAt,
-        publishedAt: post.publishedAt,
+        publishedAt: post.publishedAt || (post.status === 'published' ? post.createdAt : null),
         lastViewedAt: post.lastViewedAt
       },
       version: post.version

@@ -7,7 +7,7 @@ import {
   KeyIcon,
   CpuChipIcon
 } from '@heroicons/react/24/outline'
-import { formatRelativeTime } from '../../utils/dateUtils'
+import { formatRelativeTime, getPostDisplayDate } from '../../utils/dateUtils'
 import { motion } from 'framer-motion'
 import LoadingSpinner from '../UI/LoadingSpinner'
 import ErrorMessage from '../UI/ErrorMessage'
@@ -38,7 +38,7 @@ export default function BlogGrid({ data, isLoading, error, emptyMessage }) {
     return (
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
         <div className="text-center">
-          <p className="text-gray-500 dark:text-gray-400 text-lg">
+          <p className="text-white/50 text-lg">
             {emptyMessage}
           </p>
         </div>
@@ -102,17 +102,17 @@ export default function BlogGrid({ data, isLoading, error, emptyMessage }) {
                 </div>
 
                 {/* Title */}
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors line-clamp-2">
+                <h2 className="text-xl font-semibold text-white group-hover:text-[#00FBFF] transition-colors line-clamp-2">
                   {post.title}
                 </h2>
 
                 {/* Excerpt */}
-                <p className="mt-3 text-gray-600 dark:text-gray-300 line-clamp-3">
+                <p className="mt-3 text-white/65 line-clamp-3">
                   {post.excerpt}
                 </p>
 
                 {/* Meta */}
-                <div className="mt-4 flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
+                <div className="mt-4 flex items-center justify-between text-sm text-white/45">
                   <div className="flex items-center space-x-4">
                     <div className="flex items-center">
                       <ClockIcon className="h-4 w-4 mr-1" />
@@ -124,12 +124,12 @@ export default function BlogGrid({ data, isLoading, error, emptyMessage }) {
                     </div>
                   </div>
                   <div>
-                    {formatRelativeTime(post.timestamps.publishedAt)}
+                    {formatRelativeTime(getPostDisplayDate(post.timestamps))}
                   </div>
                 </div>
 
                 {/* Read More */}
-                <div className="mt-4 flex items-center text-primary-600 dark:text-primary-400 font-medium group-hover:text-primary-700 dark:group-hover:text-primary-300">
+                <div className="mt-4 flex items-center text-[#00FBFF] font-medium group-hover:text-[#00FBFF]/80">
                   Read more
                   <ArrowRightIcon className="ml-1 h-4 w-4 group-hover:translate-x-1 transition-transform" />
                 </div>

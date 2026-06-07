@@ -11,12 +11,15 @@ import {
   ShieldCheckIcon,
   KeyIcon
 } from '@heroicons/react/24/outline'
-import { formatRelativeTime } from '../utils/dateUtils'
+import { formatRelativeTime, getPostDisplayDate } from '../utils/dateUtils'
 import { motion } from 'framer-motion'
 import { blogApi } from '../services/api'
 import LoadingSpinner from '../components/UI/LoadingSpinner'
 import ErrorMessage from '../components/UI/ErrorMessage'
 import OptimizedImage from '../components/UI/OptimizedImage'
+import PageHero from '../components/UI/PageHero'
+import { BannerAd } from '../components/Ads/GoogleAdSense'
+import { adsConfig } from '../config/ads'
 
 const sortOptions = [
   { value: 'createdAt:desc', label: 'Latest First' },
@@ -124,23 +127,14 @@ export default function BlogList() {
         <meta name="robots" content="index, follow" />
       </Helmet>
 
-      <div className="bg-white dark:bg-gray-900 min-h-screen">
-        {/* Header */}
-        <div className="bg-gradient-to-r from-slate-900 via-blue-900 to-slate-800 py-16">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="text-center">
-              <h1 className="text-4xl font-bold text-white sm:text-5xl">
-                Security Insights Blog
-              </h1>
-              <p className="mt-4 text-xl text-primary-100">
-                Expert analysis on cybersecurity and identity management
-              </p>
-            </div>
-          </div>
-        </div>
+      <div className="min-h-screen bg-black">
+        <PageHero
+          title="Security Insights Blog"
+          subtitle="Expert analysis on cybersecurity and identity management"
+        />
 
         {/* Search and Filters */}
-        <div className="border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+        <div className="border-b border-[#00FBFF]/10 bg-black/80">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
             <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
               {/* Search */}
@@ -265,7 +259,7 @@ export default function BlogList() {
             <ErrorMessage message="Failed to load blog posts" />
           ) : posts.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-gray-500 dark:text-gray-400 text-lg">
+              <p className="text-white/50 text-lg">
                 No articles found matching your criteria.
               </p>
               <button
@@ -282,7 +276,7 @@ export default function BlogList() {
             <>
               {/* Results Info */}
               <div className="mb-8">
-                <p className="text-gray-600 dark:text-gray-400">
+                <p className="text-white/60">
                   Showing {posts.length} of {pagination.total} articles
                   {(securityOnly || iamOnly || currentCategory || currentTag) && (
                     <span className="ml-2 text-sm">
@@ -291,6 +285,12 @@ export default function BlogList() {
                   )}
                 </p>
               </div>
+
+              {adsConfig.slots.blogListBanner && (
+                <div className="mb-8">
+                  <BannerAd adSlot={adsConfig.slots.blogListBanner} />
+                </div>
+              )}
 
               {/* Posts Grid */}
               <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
@@ -369,7 +369,7 @@ export default function BlogList() {
                             </div>
                           </div>
                           <div>
-                            {formatRelativeTime(post.timestamps.publishedAt)}
+                            {formatRelativeTime(getPostDisplayDate(post.timestamps))}
                           </div>
                         </div>
 

@@ -10,7 +10,7 @@ import {
   KeyIcon,
   CpuChipIcon
 } from '@heroicons/react/24/outline'
-import { formatRelativeTime } from '../../utils/dateUtils'
+import { formatRelativeTime, getPostDisplayDate } from '../../utils/dateUtils'
 import { blogApi } from '../../services/api'
 import LoadingSpinner from '../UI/LoadingSpinner'
 import ErrorMessage from '../UI/ErrorMessage'
@@ -159,7 +159,7 @@ export default function RecentPosts() {
                         </div>
                       </div>
                       <div>
-                        {formatRelativeTime(post.timestamps.publishedAt)}
+                        {formatRelativeTime(getPostDisplayDate(post.timestamps))}
                       </div>
                     </div>
 

@@ -352,8 +352,8 @@ class ReadModelStore {
     }
   }
 
-  // Convert update operators to Sequelize format
-  // Also converts camelCase field names to snake_case for database columns
+  // Convert update operators to Sequelize format.
+  // Use model attribute names (camelCase); Sequelize maps them to DB columns.
   convertUpdate(update) {
     if (!update || typeof update !== 'object') {
       return update;
@@ -363,31 +363,36 @@ class ReadModelStore {
       throw new Error('Sequelize not initialized. Call connect() first.');
     }
 
-    // Helper function to convert camelCase to snake_case
-    const toSnakeCase = (str) => {
-      return str.replace(/([A-Z])/g, '_$1').toLowerCase();
+    const toSnakeCase = (str) => str.replace(/([A-Z])/g, '_$1').toLowerCase();
+    const normalizeAttributeKey = (key) => {
+      if (key === 'created_at') return 'createdAt';
+      if (key === 'updated_at') return 'updatedAt';
+      if (key === 'published_at') return 'publishedAt';
+      return key;
+    };
+
+    const applyIncrement = (result, key, value) => {
+      const attributeKey = normalizeAttributeKey(key);
+      const columnName = toSnakeCase(attributeKey);
+      result[attributeKey] = this.sequelize.literal(`${columnName} + ${value}`);
     };
 
     // Handle update operators
     if (update.$set) {
       const result = {};
-      // Convert camelCase field names to snake_case
       for (const [key, value] of Object.entries(update.$set)) {
+        const attributeKey = normalizeAttributeKey(key);
         // Never allow createdAt to be updated - it's immutable
-        if (key === 'createdAt' || key === 'created_at') {
+        if (attributeKey === 'createdAt') {
           logger.warn('Attempted to update createdAt field, ignoring', { key, value });
           continue;
         }
-        const snakeCaseKey = toSnakeCase(key);
-        result[snakeCaseKey] = value;
+        result[attributeKey] = value;
       }
-      
-      // Handle $inc operator
+
       if (update.$inc) {
         for (const [key, value] of Object.entries(update.$inc)) {
-          const snakeCaseKey = toSnakeCase(key);
-          // Sequelize doesn't have direct $inc, so we need to use literal SQL
-          result[snakeCaseKey] = this.sequelize.literal(`${snakeCaseKey} + ${value}`);
+          applyIncrement(result, key, value);
         }
       }
       return result;
@@ -397,17 +402,20 @@ class ReadModelStore {
     if (update.$inc) {
       const result = {};
       for (const [key, value] of Object.entries(update.$inc)) {
-        const snakeCaseKey = toSnakeCase(key);
-        result[snakeCaseKey] = this.sequelize.literal(`${snakeCaseKey} + ${value}`);
+        applyIncrement(result, key, value);
       }
       return result;
     }
 
-    // Plain update object - convert field names
+    // Plain update object
     const result = {};
     for (const [key, value] of Object.entries(update)) {
-      const snakeCaseKey = toSnakeCase(key);
-      result[snakeCaseKey] = value;
+      const attributeKey = normalizeAttributeKey(key);
+      if (attributeKey === 'createdAt') {
+        logger.warn('Attempted to update createdAt field, ignoring', { key, value });
+        continue;
+      }
+      result[attributeKey] = value;
     }
     return result;
   }

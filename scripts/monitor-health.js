@@ -7,7 +7,7 @@
  * Usage:
  *   - Manual: node scripts/monitor-health.js
  *   - Cron (every 5 minutes): */5 * * * * cd /path/to/project && node scripts/monitor-health.js
- *   - Systemd timer: See docs/HEALTH_CHECK_MONITORING.md
+ *   - Scheduled: use cron or a systemd timer; see README.md
  */
 
 require('dotenv').config();

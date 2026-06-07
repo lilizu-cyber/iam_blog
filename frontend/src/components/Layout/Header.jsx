@@ -1,15 +1,14 @@
 import { useState, useEffect } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { Disclosure } from '@headlessui/react'
-import { 
-  Bars3Icon, 
-  XMarkIcon, 
+import {
+  Bars3Icon,
+  XMarkIcon,
   MagnifyingGlassIcon,
   ShieldCheckIcon,
   KeyIcon,
   SunIcon,
   MoonIcon,
-  ComputerDesktopIcon
 } from '@heroicons/react/24/outline'
 import { useThemeStore } from '../../stores/themeStore'
 import SearchModal from '../Search/SearchModal'
@@ -17,39 +16,48 @@ import SearchModal from '../Search/SearchModal'
 const navigation = [
   { name: 'Home', href: '/' },
   { name: 'Blog', href: '/blog' },
-  { 
-    name: 'Security', 
+  {
+    name: 'Security',
     href: '/security',
     icon: ShieldCheckIcon,
-    description: 'Cybersecurity insights and best practices'
+    description: 'Cybersecurity insights and best practices',
   },
-  { 
-    name: 'IAM', 
+  {
+    name: 'IAM',
     href: '/iam',
     icon: KeyIcon,
-    description: 'Identity and Access Management topics'
+    description: 'Identity and Access Management topics',
   },
   { name: 'About', href: '/about' },
-  { name: 'Contact', href: '/contact' },
+  { name: 'Connect', href: '/contact' },
+]
+
+const gridNavigation = [
+  { name: 'Blog', href: '/blog' },
+  { name: 'Security', href: '/security' },
+  { name: 'IAM', href: '/iam' },
+  { name: 'Connect', href: '/contact' },
 ]
 
 function classNames(...classes) {
   return classes.filter(Boolean).join(' ')
 }
 
-export default function Header() {
+export default function Header({ variant = 'default', overlay = false }) {
   const location = useLocation()
   const navigate = useNavigate()
   const { theme, toggleTheme } = useThemeStore()
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)
+  const isGrid = variant === 'grid'
 
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 0)
+      setIsScrolled(window.scrollY > 24)
     }
 
     window.addEventListener('scroll', handleScroll)
+    handleScroll()
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
@@ -58,39 +66,110 @@ export default function Header() {
     setIsSearchOpen(false)
   }
 
+  if (isGrid) {
+    return (
+      <>
+        <Disclosure as="nav" className={classNames(
+          overlay ? 'absolute left-0 right-0 top-0 z-50' : 'sticky top-0 z-50'
+        )}>
+          {({ open }) => (
+            <>
+              <div
+                className={classNames(
+                  'border-b transition-all duration-300',
+                  isScrolled
+                    ? 'border-cyan-500/20 bg-black/90 backdrop-blur-md'
+                    : 'border-cyan-500/10 bg-transparent'
+                )}
+              >
+                <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+                  <Link
+                    to="/"
+                    className="font-bold uppercase tracking-[0.25em] text-[#00FBFF] grid-logo-glow text-sm sm:text-base"
+                  >
+                    cyberiam
+                  </Link>
+
+                  <div className="hidden items-center gap-8 sm:flex">
+                    {gridNavigation.map((item) => (
+                      <Link
+                        key={item.name}
+                        to={item.href}
+                        className={classNames(
+                          'text-sm font-medium text-white/90 transition-colors hover:text-white',
+                          location.pathname === item.href && 'text-white'
+                        )}
+                      >
+                        {item.name}
+                      </Link>
+                    ))}
+                  </div>
+
+                  <div className="flex items-center sm:hidden">
+                    <Disclosure.Button className="rounded-md p-2 text-cyan-400 hover:text-cyan-300">
+                      <span className="sr-only">Open menu</span>
+                      {open ? (
+                        <XMarkIcon className="h-6 w-6" />
+                      ) : (
+                        <Bars3Icon className="h-6 w-6" />
+                      )}
+                    </Disclosure.Button>
+                  </div>
+                </div>
+              </div>
+
+              <Disclosure.Panel className="border-b border-cyan-500/10 bg-black/95 backdrop-blur-md sm:hidden">
+                <div className="space-y-1 px-4 py-3">
+                  {gridNavigation.map((item) => (
+                    <Disclosure.Button
+                      key={item.name}
+                      as={Link}
+                      to={item.href}
+                      className="block py-2 text-sm font-medium text-white/90 hover:text-[#00FBFF]"
+                    >
+                      {item.name}
+                    </Disclosure.Button>
+                  ))}
+                </div>
+              </Disclosure.Panel>
+            </>
+          )}
+        </Disclosure>
+
+        <SearchModal
+          isOpen={isSearchOpen}
+          onClose={() => setIsSearchOpen(false)}
+          onSearch={handleSearch}
+        />
+      </>
+    )
+  }
+
   return (
     <>
-      <Disclosure as="nav" className={classNames(
-        "sticky top-0 z-40 transition-all duration-200",
-        isScrolled 
-          ? "bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm shadow-sm border-b border-gray-200 dark:border-gray-700" 
-          : "bg-white dark:bg-gray-900"
-      )}>
+      <Disclosure
+        as="nav"
+        className={classNames(
+          'sticky top-0 z-40 transition-all duration-200',
+          isScrolled
+            ? 'border-b border-gray-200 bg-white/95 shadow-sm backdrop-blur-sm dark:border-gray-700 dark:bg-gray-900/95'
+            : 'bg-white dark:bg-gray-900'
+        )}
+      >
         {({ open }) => (
           <>
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
               <div className="flex h-16 justify-between">
                 <div className="flex">
-                  {/* Logo */}
                   <div className="flex flex-shrink-0 items-center">
                     <Link to="/" className="flex items-center space-x-2">
-                      <div className="flex items-center space-x-1">
-                        <ShieldCheckIcon className="h-8 w-8 text-security-600" />
-                        <KeyIcon className="h-6 w-6 text-iam-600" />
-                      </div>
-                      <div className="hidden sm:block">
-                        <span className="text-xl font-bold gradient-text">
-                          CyberSec & IAM
-                        </span>
-                        <div className="text-xs text-gray-500 dark:text-gray-400 -mt-1">
-                          Security Insights
-                        </div>
-                      </div>
+                      <span className="text-xl font-bold uppercase tracking-[0.15em] text-[#00FBFF] grid-logo-glow">
+                        cyberiam
+                      </span>
                     </Link>
                   </div>
 
-                  {/* Desktop navigation */}
-                  <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
+                  <div className="hidden sm:ml-8 sm:flex sm:space-x-8">
                     {navigation.map((item) => {
                       const isActive = location.pathname === item.href
                       return (
@@ -104,9 +183,7 @@ export default function Header() {
                             'inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium transition-colors duration-200'
                           )}
                         >
-                          {item.icon && (
-                            <item.icon className="mr-2 h-4 w-4" />
-                          )}
+                          {item.icon && <item.icon className="mr-2 h-4 w-4" />}
                           {item.name}
                         </Link>
                       )
@@ -114,23 +191,20 @@ export default function Header() {
                   </div>
                 </div>
 
-                {/* Right side */}
                 <div className="hidden sm:ml-6 sm:flex sm:items-center sm:space-x-4">
-                  {/* Search button */}
                   <button
                     type="button"
                     onClick={() => setIsSearchOpen(true)}
-                    className="rounded-md p-2 text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    className="rounded-md p-2 text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:hover:text-gray-300"
                   >
                     <span className="sr-only">Search</span>
                     <MagnifyingGlassIcon className="h-5 w-5" />
                   </button>
 
-                  {/* Theme toggle */}
                   <button
                     type="button"
                     onClick={toggleTheme}
-                    className="rounded-md p-2 text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    className="rounded-md p-2 text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:hover:text-gray-300"
                   >
                     <span className="sr-only">Toggle theme</span>
                     {theme === 'dark' ? (
@@ -141,7 +215,6 @@ export default function Header() {
                   </button>
                 </div>
 
-                {/* Mobile menu button */}
                 <div className="flex items-center sm:hidden">
                   <button
                     type="button"
@@ -150,8 +223,8 @@ export default function Header() {
                   >
                     <MagnifyingGlassIcon className="h-5 w-5" />
                   </button>
-                  
-                  <Disclosure.Button className="inline-flex items-center justify-center rounded-md p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 dark:hover:bg-gray-800 dark:hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-500">
+
+                  <Disclosure.Button className="inline-flex items-center justify-center rounded-md p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-500 dark:hover:bg-gray-800 dark:hover:text-gray-300">
                     <span className="sr-only">Open main menu</span>
                     {open ? (
                       <XMarkIcon className="block h-6 w-6" aria-hidden="true" />
@@ -163,9 +236,8 @@ export default function Header() {
               </div>
             </div>
 
-            {/* Mobile menu */}
-            <Disclosure.Panel className="sm:hidden">
-              <div className="space-y-1 pb-3 pt-2 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+            <Disclosure.Panel className="border-t border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900 sm:hidden">
+              <div className="space-y-1 border-t border-gray-200 pb-3 pt-2 dark:border-gray-700">
                 {navigation.map((item) => {
                   const isActive = location.pathname === item.href
                   return (
@@ -181,9 +253,7 @@ export default function Header() {
                       )}
                     >
                       <div className="flex items-center">
-                        {item.icon && (
-                          <item.icon className="mr-3 h-5 w-5" />
-                        )}
+                        {item.icon && <item.icon className="mr-3 h-5 w-5" />}
                         <div>
                           <div>{item.name}</div>
                           {item.description && (
@@ -196,9 +266,8 @@ export default function Header() {
                     </Disclosure.Button>
                   )
                 })}
-                
-                {/* Mobile theme toggle */}
-                <div className="border-t border-gray-200 dark:border-gray-700 pt-3">
+
+                <div className="border-t border-gray-200 pt-3 dark:border-gray-700">
                   <button
                     type="button"
                     onClick={toggleTheme}
@@ -223,7 +292,6 @@ export default function Header() {
         )}
       </Disclosure>
 
-      {/* Search Modal */}
       <SearchModal
         isOpen={isSearchOpen}
         onClose={() => setIsSearchOpen(false)}

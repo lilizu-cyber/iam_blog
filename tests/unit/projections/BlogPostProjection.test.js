@@ -64,7 +64,7 @@ describe('BlogPostProjection', () => {
       expect(readModelStore.create).toHaveBeenCalledWith(
         'BlogPost',
         expect.objectContaining({
-          authorName: 'Admin',
+          authorName: 'Ilirijana Zuka',
           authorEmail: 'admin@example.com'
         })
       );

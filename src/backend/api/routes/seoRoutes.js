@@ -7,6 +7,20 @@ module.exports = (readModelStore) => {
   router.get('/sitemap.xml', async (req, res) => {
     try {
       const baseUrl = process.env.FRONTEND_URL || req.protocol + '://' + req.get('host');
+      const today = new Date().toISOString().split('T')[0];
+
+      const staticPages = [
+        { path: '/', changefreq: 'daily', priority: '1.0' },
+        { path: '/blog', changefreq: 'daily', priority: '0.9' },
+        { path: '/security', changefreq: 'weekly', priority: '0.8' },
+        { path: '/iam', changefreq: 'weekly', priority: '0.8' },
+        { path: '/about', changefreq: 'monthly', priority: '0.7' },
+        { path: '/contact', changefreq: 'monthly', priority: '0.6' },
+        { path: '/privacy', changefreq: 'yearly', priority: '0.5' },
+        { path: '/terms', changefreq: 'yearly', priority: '0.5' },
+        { path: '/cookies', changefreq: 'yearly', priority: '0.5' },
+        { path: '/disclaimer', changefreq: 'yearly', priority: '0.5' },
+      ];
       
       // Get all published posts
       const posts = await readModelStore.find('BlogPost', { 
@@ -23,38 +37,19 @@ module.exports = (readModelStore) => {
         xmlns:xhtml="http://www.w3.org/1999/xhtml"
         xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"
         xmlns:video="http://www.google.com/schemas/sitemap-video/1.1">
-  
-  <!-- Homepage -->
-  <url>
-    <loc>${baseUrl}/</loc>
-    <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>1.0</priority>
+`;
+
+      staticPages.forEach(({ path, changefreq, priority }) => {
+        sitemap += `  <url>
+    <loc>${baseUrl}${path === '/' ? '' : path}</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>${changefreq}</changefreq>
+    <priority>${priority}</priority>
   </url>
-  
-  <!-- Blog List -->
-  <url>
-    <loc>${baseUrl}/blog</loc>
-    <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.9</priority>
-  </url>
-  
-  <!-- Static Pages -->
-  <url>
-    <loc>${baseUrl}/about</loc>
-    <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  
-  <url>
-    <loc>${baseUrl}/contact</loc>
-    <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
+`;
+      });
+
+      sitemap += `
   <!-- Blog Posts -->
 `;
 

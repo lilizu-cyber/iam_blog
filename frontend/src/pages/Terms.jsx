@@ -1,4 +1,5 @@
 import { Helmet } from 'react-helmet-async'
+import { siteConfig } from '../config/site'
 
 export default function Terms() {
   return (
@@ -55,6 +56,26 @@ export default function Terms() {
                 expressed or implied, and hereby disclaim and negate all other warranties including, 
                 without limitation, implied warranties or conditions of merchantability, fitness for 
                 a particular purpose, or non-infringement of intellectual property or other violation of rights.
+              </p>
+            </section>
+
+            <section className="mb-8">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mt-8 mb-4">
+                Advertising
+              </h2>
+              <p className="text-gray-700 dark:text-gray-300 mb-4">
+                {siteConfig.siteName} may display third-party advertisements through Google AdSense.
+                Ad content is provided by Google and its partners. We do not control which ads are shown.
+                Use of this site after accepting cookies may result in personalized advertising.
+                See our{' '}
+                <a href="/privacy" className="text-primary-600 dark:text-primary-400 hover:underline">
+                  Privacy Policy
+                </a>{' '}
+                and{' '}
+                <a href="/cookies" className="text-primary-600 dark:text-primary-400 hover:underline">
+                  Cookie Policy
+                </a>{' '}
+                for details.
               </p>
             </section>
 

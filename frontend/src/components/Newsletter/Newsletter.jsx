@@ -5,6 +5,7 @@ import { EnvelopeIcon, CheckIcon } from '@heroicons/react/24/outline'
 import { useMutation } from 'react-query'
 import toast from 'react-hot-toast'
 import { newsletterApi } from '../../services/api'
+import GridSection from '../UI/GridSection'
 
 export default function Newsletter() {
   const [email, setEmail] = useState('')
@@ -31,30 +32,30 @@ export default function Newsletter() {
 
   if (isSubscribed) {
     return (
-      <section className="bg-gradient-to-r from-slate-900 via-blue-900 to-slate-800 py-16">
+      <GridSection>
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             className="text-center"
           >
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-white/20 rounded-full mb-6">
-              <CheckIcon className="h-8 w-8 text-white" />
+            <div className="mb-6 inline-flex h-16 w-16 items-center justify-center rounded-full border border-[#00FBFF]/40 bg-[#00FBFF]/10 grid-hero-cta">
+              <CheckIcon className="h-8 w-8 text-[#00FBFF]" />
             </div>
-            <h2 className="text-3xl font-bold text-white sm:text-4xl">
+            <h2 className="text-3xl font-semibold text-white sm:text-4xl grid-hero-title-glow">
               Welcome to the Community!
             </h2>
-            <p className="mt-4 text-xl text-primary-100">
+            <p className="mx-auto mt-4 max-w-2xl text-lg text-white/80">
               You'll receive our latest security insights and analysis directly in your inbox.
             </p>
           </motion.div>
         </div>
-      </section>
+      </GridSection>
     )
   }
 
   return (
-    <section className="bg-gradient-to-r from-slate-900 via-blue-900 to-slate-800 py-16">
+    <GridSection>
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <motion.div
           ref={ref}
@@ -63,21 +64,21 @@ export default function Newsletter() {
           transition={{ duration: 0.8 }}
           className="text-center"
         >
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-white/20 rounded-full mb-6">
-            <EnvelopeIcon className="h-8 w-8 text-white" />
+          <div className="mb-6 inline-flex h-16 w-16 items-center justify-center rounded-full border border-[#00FBFF]/40 bg-[#00FBFF]/10 grid-hero-cta">
+            <EnvelopeIcon className="h-8 w-8 text-[#00FBFF]" />
           </div>
-          
-          <h2 className="text-3xl font-bold text-white sm:text-4xl">
+
+          <h2 className="text-3xl font-semibold text-white sm:text-4xl grid-hero-title-glow">
             Stay Ahead of Security Threats
           </h2>
-          
-          <p className="mt-4 text-xl text-primary-100 max-w-2xl mx-auto">
-            Get weekly insights on the latest cybersecurity trends, IAM best practices, 
+
+          <p className="mx-auto mt-4 max-w-2xl text-lg text-white/80">
+            Get weekly insights on the latest cybersecurity trends, IAM best practices,
             and AI-powered security solutions delivered to your inbox.
           </p>
 
-          <form onSubmit={handleSubmit} className="mt-8 max-w-md mx-auto">
-            <div className="flex flex-col sm:flex-row gap-3">
+          <form onSubmit={handleSubmit} className="mx-auto mt-8 max-w-md">
+            <div className="flex flex-col gap-3 sm:flex-row">
               <div className="flex-1">
                 <label htmlFor="email" className="sr-only">
                   Email address
@@ -89,35 +90,35 @@ export default function Newsletter() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Enter your email"
-                  className="w-full px-4 py-3 rounded-lg border-0 bg-white/90 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-white focus:bg-white transition-colors"
+                  className="w-full rounded-sm border border-[#00FBFF]/30 bg-black/50 px-4 py-3 text-white placeholder-white/40 backdrop-blur-sm transition-colors focus:border-[#00FBFF] focus:bg-black/70 focus:outline-none focus:ring-1 focus:ring-[#00FBFF]/50"
                 />
               </div>
               <button
                 type="submit"
                 disabled={subscribeMutation.isLoading}
-                className="px-6 py-3 bg-white text-primary-600 font-semibold rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-primary-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="grid-hero-cta rounded-sm border border-[#00FBFF] bg-transparent px-6 py-3 text-sm font-semibold uppercase tracking-wider text-[#00FBFF] transition-all duration-200 hover:bg-[#00FBFF]/10 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {subscribeMutation.isLoading ? 'Subscribing...' : 'Subscribe'}
               </button>
             </div>
           </form>
 
-          <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-6 text-primary-100">
+          <div className="mt-6 flex flex-col items-center justify-center gap-4 text-white/70 sm:flex-row sm:gap-6">
             <div className="flex items-center">
-              <CheckIcon className="h-5 w-5 mr-2" />
+              <CheckIcon className="mr-2 h-5 w-5 text-[#00FBFF]" />
               <span className="text-sm">Weekly security insights</span>
             </div>
             <div className="flex items-center">
-              <CheckIcon className="h-5 w-5 mr-2" />
+              <CheckIcon className="mr-2 h-5 w-5 text-[#00FBFF]" />
               <span className="text-sm">No spam, unsubscribe anytime</span>
             </div>
             <div className="flex items-center">
-              <CheckIcon className="h-5 w-5 mr-2" />
+              <CheckIcon className="mr-2 h-5 w-5 text-[#00FBFF]" />
               <span className="text-sm">Expert analysis & tutorials</span>
             </div>
           </div>
         </motion.div>
       </div>
-    </section>
+    </GridSection>
   )
 }

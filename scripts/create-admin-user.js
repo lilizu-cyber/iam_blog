@@ -44,6 +44,9 @@ async function createAdminUser() {
     const adminUsername = process.env.ADMIN_USERNAME || 'admin';
     const adminPassword = process.env.ADMIN_PASSWORD || 'Schlurfend.?.123';
     const adminEmail = process.env.ADMIN_EMAIL || 'admin@example.com';
+    const site = require('../src/backend/config/site');
+
+    logger.info(`Site author display name: ${site.authorName}`);
 
     // Check if admin user already exists
     const existingAdmin = await User.findOne({

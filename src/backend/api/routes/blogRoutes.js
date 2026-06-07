@@ -2,6 +2,7 @@ const express = require('express');
 const { body, param, query, validationResult } = require('express-validator');
 const router = express.Router();
 const logger = require('../../utils/logger');
+const site = require('../../config/site');
 const { writeLimiter, readLimiter } = require('../../middleware/rateLimiter');
 const { sanitizeBlogPost } = require('../../middleware/sanitizeMiddleware');
 
@@ -79,8 +80,8 @@ module.exports = (commandBus, queryBus, readModelStore) => {
           data: {
             ...req.body,
             authorId: req.user.id,
-            authorName: req.user.name || req.user.username || 'Admin',
-            authorEmail: req.user.email || 'admin@example.com'
+            authorName: site.authorName,
+            authorEmail: req.user.email || site.authorEmail
           },
           metadata: {
             userId: req.user.id,
@@ -485,15 +486,15 @@ module.exports = (commandBus, queryBus, readModelStore) => {
           status: post.status,
           author: {
             id: post.authorId,
-            name: post.authorName || 'Admin',
-            email: post.authorEmail || 'admin@example.com'
+            name: post.authorName || site.authorName,
+            email: post.authorEmail || site.authorEmail
           },
           category: post.categoryId ? {
             id: post.categoryId,
             name: post.categoryName
           } : null,
           tags: post.tags || [],
-          publishedAt: post.publishedAt,
+          publishedAt: post.publishedAt || (post.status === 'published' ? post.createdAt : null),
           createdAt: post.createdAt,
           updatedAt: post.updatedAt,
           viewCount: post.viewCount || 0,
@@ -991,8 +992,8 @@ module.exports = (commandBus, queryBus, readModelStore) => {
             prompt: prompt.trim(),
             categoryId: categoryId || null,
             authorId: req.user?.id || 'system',
-            authorName: req.user?.name || 'Admin',
-            authorEmail: req.user?.email || 'admin@example.com'
+            authorName: site.authorName,
+            authorEmail: req.user?.email || site.authorEmail
           },
           metadata: {
             userId: req.user?.id || 'system',

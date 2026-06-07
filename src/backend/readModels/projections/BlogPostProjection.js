@@ -1,4 +1,5 @@
 const logger = require('../../utils/logger');
+const site = require('../../config/site');
 
 class BlogPostProjection {
   constructor(readModelStore) {
@@ -19,8 +20,8 @@ class BlogPostProjection {
         excerpt: data.excerpt,
         slug: data.slug,
         authorId: data.authorId,
-        authorName: data.authorName || 'Admin', // Default to Admin if not provided
-        authorEmail: data.authorEmail || 'admin@example.com', // Default email
+        authorName: data.authorName || site.authorName,
+        authorEmail: data.authorEmail || site.authorEmail,
         categoryId: data.categoryId,
         tags: data.tags || [],
         status: 'draft',

@@ -1,5 +1,11 @@
 import { formatDistanceToNow, format } from 'date-fns'
 
+/** Prefer publish time, fall back to created time for display. */
+export function getPostDisplayDate(timestamps) {
+  if (!timestamps) return null
+  return timestamps.publishedAt || timestamps.createdAt || null
+}
+
 /**
  * Safely formats a date as relative time (e.g., "2 days ago")
  * Returns "Just now" if date is null, invalid, or in the future

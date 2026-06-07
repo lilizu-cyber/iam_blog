@@ -18,6 +18,7 @@ const Contact = lazy(() => import('./pages/Contact'))
 const Privacy = lazy(() => import('./pages/Privacy'))
 const Terms = lazy(() => import('./pages/Terms'))
 const Cookies = lazy(() => import('./pages/Cookies'))
+const Disclaimer = lazy(() => import('./pages/Disclaimer'))
 const NotFound = lazy(() => import('./pages/NotFound'))
 
 // Lazy load admin pages (larger bundles)
@@ -46,10 +47,7 @@ import { useThemeStore } from './stores/themeStore'
 // Components
 import CookieConsent from './components/UI/CookieConsent'
 
-// Analytics (will initialize if consent given)
-import './services/analytics'
-
-// Analytics (will initialize if consent given)
+// Analytics (initializes when cookie consent allows)
 import './services/analytics'
 
 function App() {
@@ -86,6 +84,7 @@ function App() {
               <Route path="privacy" element={<Privacy />} />
               <Route path="terms" element={<Terms />} />
               <Route path="cookies" element={<Cookies />} />
+              <Route path="disclaimer" element={<Disclaimer />} />
               
               {/* 404 */}
               <Route path="*" element={<NotFound />} />
@@ -118,6 +117,7 @@ function App() {
             </Route>
           </Routes>
         </Suspense>
+        <CookieConsent />
       </div>
     </AuthProvider>
   )
