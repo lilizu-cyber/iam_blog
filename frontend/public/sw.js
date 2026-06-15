@@ -1,8 +1,8 @@
 // Service Worker for IAM Blog
 // Version: 1.0.0
 
-const CACHE_NAME = 'iam-blog-v1';
-const RUNTIME_CACHE = 'iam-blog-runtime-v1';
+const CACHE_NAME = 'iam-blog-v2';
+const RUNTIME_CACHE = 'iam-blog-runtime-v2';
 
 // Assets to cache on install
 // Only cache assets that definitely exist - CSS/JS will be cached on first load
