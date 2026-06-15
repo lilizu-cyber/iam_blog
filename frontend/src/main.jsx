@@ -7,22 +7,22 @@ import { HelmetProvider } from 'react-helmet-async'
 import { Toaster } from 'react-hot-toast'
 
 import App from './App.jsx'
+import CookieConsent from './components/UI/CookieConsent'
+import { AuthProvider } from './contexts/AuthContext'
 import './index.css'
 
-// Suppress ReactQuill findDOMNode deprecation warning (library issue, not our code)
-// This warning comes from react-quill v2.0.0 using deprecated React APIs internally
-// It's harmless and will be fixed when the library updates
-if (process.env.NODE_ENV === 'development') {
-  const originalError = console.error
-  console.error = (...args) => {
-    if (
-      typeof args[0] === 'string' &&
-      args[0].includes('findDOMNode is deprecated')
-    ) {
-      return // Suppress this specific warning
-    }
-    originalError.call(console, ...args)
-  }
+if (import.meta.env.DEV && 'serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations().then((registrations) => {
+    registrations.forEach((registration) => registration.unregister())
+  })
+}
+
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch((error) => {
+      console.warn('Service Worker registration failed:', error)
+    })
+  })
 }
 
 // Create a client with optimized caching
@@ -52,7 +52,10 @@ ReactDOM.createRoot(document.getElementById('root')).render(
             v7_relativeSplatPath: true,
           }}
         >
-          <App />
+          <AuthProvider>
+            <App />
+          </AuthProvider>
+          <CookieConsent />
           <Toaster
             position="top-right"
             toastOptions={{

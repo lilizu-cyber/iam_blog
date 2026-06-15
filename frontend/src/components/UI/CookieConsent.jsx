@@ -1,25 +1,31 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { XMarkIcon, InformationCircleIcon } from '@heroicons/react/24/outline'
 import { Link } from 'react-router-dom'
+import { getCookieConsent } from '../../utils/cookieConsent'
 
 const COOKIE_CONSENT_KEY = 'cookie-consent'
-const COOKIE_CONSENT_EXPIRY_DAYS = 365
 
 export default function CookieConsent() {
   const [showBanner, setShowBanner] = useState(false)
   const [showDetails, setShowDetails] = useState(false)
 
-  useEffect(() => {
-    // Check if user has already given consent
-    const consent = localStorage.getItem(COOKIE_CONSENT_KEY)
-    if (!consent) {
-      // Show banner after a short delay for better UX
-      const timer = setTimeout(() => {
-        setShowBanner(true)
-      }, 1000)
-      return () => clearTimeout(timer)
-    }
+  const openBanner = useCallback(() => {
+    setShowDetails(false)
+    setShowBanner(true)
   }, [])
+
+  useEffect(() => {
+    if (!getCookieConsent()) {
+      openBanner()
+    }
+  }, [openBanner])
+
+  useEffect(() => {
+    const handleOpenPreferences = () => openBanner()
+
+    window.addEventListener('openCookiePreferences', handleOpenPreferences)
+    return () => window.removeEventListener('openCookiePreferences', handleOpenPreferences)
+  }, [openBanner])
 
   const saveConsent = (preferences) => {
     const consentData = {
@@ -67,7 +73,7 @@ export default function CookieConsent() {
   if (!showBanner) return null
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 shadow-lg">
+    <div className="fixed bottom-0 left-0 right-0 z-[100] bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 shadow-lg">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-4">
         <div className="flex items-start justify-between">
           <div className="flex-1">

@@ -242,8 +242,15 @@ const generalLimiter = createRateLimiter({
 // Strict rate limiter for authentication endpoints (prevent brute force)
 const authLimiter = createRateLimiter({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // 5 login attempts per 15 minutes
+  max: process.env.NODE_ENV === 'production' ? 5 : 20,
   message: 'Too many login attempts from this IP, please try again after 15 minutes.'
+});
+
+// Auth0 session sync validates an existing token; not a password brute-force vector
+const auth0SessionLimiter = createRateLimiter({
+  windowMs: 15 * 60 * 1000,
+  max: process.env.NODE_ENV === 'production' ? 30 : 100,
+  message: 'Too many Auth0 session sync attempts from this IP, please try again after 15 minutes.'
 });
 
 // Strict rate limiter for password reset and sensitive operations
@@ -271,6 +278,7 @@ const readLimiter = createRateLimiter({
 module.exports = {
   generalLimiter,
   authLimiter,
+  auth0SessionLimiter,
   strictLimiter,
   writeLimiter,
   readLimiter,

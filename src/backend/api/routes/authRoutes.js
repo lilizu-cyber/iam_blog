@@ -5,7 +5,90 @@ const router = express.Router();
 const logger = require('../../utils/logger');
 const { getSequelize } = require('../../models/index');
 const { getJWTSecret } = require('../../utils/jwtSecret');
-const { authLimiter, strictLimiter, generalLimiter } = require('../../middleware/rateLimiter');
+const { authLimiter, auth0SessionLimiter, strictLimiter, generalLimiter } = require('../../middleware/rateLimiter');
+const https = require('https');
+
+const getAuth0UserInfo = (accessToken) => {
+  const domain = process.env.AUTH0_DOMAIN;
+  if (!domain) {
+    return Promise.reject(new Error('AUTH0_DOMAIN is not configured'));
+  }
+
+  return new Promise((resolve, reject) => {
+    const request = https.request(
+      {
+        hostname: domain,
+        path: '/userinfo',
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      },
+      (response) => {
+        let body = '';
+        response.on('data', (chunk) => {
+          body += chunk;
+        });
+        response.on('end', () => {
+          if (response.statusCode !== 200) {
+            reject(new Error('Invalid Auth0 access token'));
+            return;
+          }
+
+          try {
+            resolve(JSON.parse(body));
+          } catch (error) {
+            reject(error);
+          }
+        });
+      }
+    );
+
+    request.on('error', reject);
+    request.end();
+  });
+};
+
+const getUserModel = () => {
+  const userModule = require('../../models/User');
+
+  if (userModule && typeof userModule.sync === 'function') {
+    return userModule;
+  }
+
+  if (userModule && userModule.defineUserModel) {
+    const sequelize = getSequelize();
+    return userModule.defineUserModel(sequelize);
+  }
+
+  if (typeof userModule === 'function') {
+    return userModule();
+  }
+
+  throw new Error('User model is not properly initialized');
+};
+
+const setAdminSessionCookie = (res, token) => {
+  res.cookie('adminToken', token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
+  });
+};
+
+const createAdminToken = (user) => {
+  const JWT_SECRET = getJWTSecret();
+  return jwt.sign(
+    {
+      userId: user.userId,
+      username: user.username,
+      role: user.role,
+      loginTime: new Date().toISOString(),
+    },
+    JWT_SECRET,
+    { expiresIn: process.env.JWT_EXPIRES_IN || '24h' }
+  );
+};
 
 // Middleware for handling validation errors
 const handleValidationErrors = (req, res, next) => {
@@ -174,6 +257,87 @@ module.exports = () => {
           res.status(500).json({
             success: false,
             message: errorMessage
+          });
+        }
+      }
+    }
+  );
+
+  router.post('/auth0/session',
+    auth0SessionLimiter,
+    async (req, res) => {
+      try {
+        const authHeader = req.headers.authorization || '';
+        const accessToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
+
+        if (!accessToken) {
+          return res.status(401).json({
+            success: false,
+            message: 'Access token required',
+          });
+        }
+
+        const auth0User = await getAuth0UserInfo(accessToken);
+
+        if (!auth0User.email) {
+          return res.status(403).json({
+            success: false,
+            message: 'Auth0 account must include an email address',
+          });
+        }
+
+        const User = getUserModel();
+        const user = await User.findOne({
+          where: {
+            email: auth0User.email.toLowerCase().trim(),
+            isActive: true,
+            role: 'admin',
+          },
+        });
+
+        if (!user) {
+          logger.warn('Auth0 login denied for non-admin user', {
+            email: auth0User.email,
+            ip: req.ip,
+          });
+          return res.status(403).json({
+            success: false,
+            message: 'Access denied. No admin account linked to this Auth0 user.',
+          });
+        }
+
+        await user.update({ lastLoginAt: new Date() });
+
+        const token = createAdminToken(user);
+        setAdminSessionCookie(res, token);
+
+        logger.info('Auth0 session established', {
+          username: user.username,
+          userId: user.userId,
+          ip: req.ip,
+        });
+
+        res.status(200).json({
+          success: true,
+          message: 'Auth0 session established',
+          data: {
+            id: user.userId,
+            username: user.username,
+            email: user.email,
+            role: user.role,
+          },
+        });
+      } catch (error) {
+        logger.error('Auth0 session endpoint error', {
+          error: error.message,
+          stack: error.stack,
+          ip: req.ip,
+        });
+
+        if (!res.headersSent) {
+          res.status(401).json({
+            success: false,
+            message: 'Failed to establish Auth0 session',
           });
         }
       }

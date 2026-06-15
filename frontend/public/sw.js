@@ -72,6 +72,17 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Skip Vite dev server assets and source modules
+  if (
+    url.pathname.startsWith('/@vite/') ||
+    url.pathname.startsWith('/@react-refresh') ||
+    url.pathname.startsWith('/@id/') ||
+    url.pathname.startsWith('/src/') ||
+    url.pathname.includes('/node_modules/.vite/')
+  ) {
+    return;
+  }
+
   // Skip API requests (always fetch fresh)
   if (url.pathname.startsWith('/api/')) {
     return;

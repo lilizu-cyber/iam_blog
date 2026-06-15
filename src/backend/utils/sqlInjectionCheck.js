@@ -11,7 +11,7 @@ const logger = require('./logger');
 const SQL_INJECTION_PATTERNS = [
   /(\b(SELECT|INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|EXEC|EXECUTE|UNION|SCRIPT)\b)/i,
   /(--|#|\/\*|\*\/)/, // SQL comments
-  /(;|\||&)/, // Command separators
+  /(;\s*(SELECT|INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|EXEC|EXECUTE|UNION)\b)/i, // Stacked queries
   /(\b(OR|AND)\s+\d+\s*=\s*\d+)/i, // Boolean-based injection (OR 1=1)
   /(['"]\s*(OR|AND)\s+['"]\d+['"]\s*=\s*['"]\d+['"])/i, // ' OR '1'='1' pattern
   /(OR|AND)\s+['"]1['"]\s*=\s*['"]1['"]/i, // OR '1'='1' (matches: OR '1'='1')
@@ -20,7 +20,7 @@ const SQL_INJECTION_PATTERNS = [
   /(\b(OR|AND)\s+['"]\d+['"]\s*=\s*['"]\d+['"])/i, // OR '1'='1' pattern
   /(\b(OR|AND)\s+['"]\w+['"]\s*=\s*['"]\w+['"])/i, // Boolean-based injection with strings
   /(\bUNION\s+(ALL\s+)?SELECT)/i,
-  /(CHAR|CHR|ASCII|CONCAT|SUBSTRING)/i, // SQL functions
+  /\b(CHAR|CHR|ASCII|CONCAT|SUBSTRING)\b/i, // SQL functions
   /(xp_|sp_)/i, // SQL Server procedures
   /(LOAD_FILE|INTO\s+OUTFILE|INTO\s+DUMPFILE)/i, // File operations
   /(['"]\s*(OR|AND)\s+['"]1['"]\s*=\s*['"]1['"])/i, // ' OR '1'='1' (more specific)

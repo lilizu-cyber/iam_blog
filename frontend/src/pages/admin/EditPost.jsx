@@ -1,8 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
-import ReactQuill from 'react-quill'
-import 'react-quill/dist/quill.snow.css'
 import AdminHeader from '../../components/Admin/AdminHeader'
 import { useQuery, useMutation, useQueryClient } from 'react-query'
 import toast from 'react-hot-toast'
@@ -10,13 +8,15 @@ import { blogApi } from '../../services/api'
 import LoadingSpinner from '../../components/UI/LoadingSpinner'
 import ErrorMessage from '../../components/UI/ErrorMessage'
 import { getFeaturedImageForPost, postMentionsOkta } from '../../utils/oktaFeaturedImage'
+import { getPlainTextFromHtml, isEmptyHtml } from '../../utils/htmlContent'
+import RichTextEditor from '../../components/Editor/RichTextEditor'
 
 export default function EditPost() {
   const { id } = useParams()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const isPublishingRef = useRef(false)
-  const quillRef = useRef(null)
+  const editorRef = useRef(null)
   const [formData, setFormData] = useState({
     title: '',
     content: '',
@@ -108,49 +108,6 @@ export default function EditPost() {
     }
   }, [response])
 
-  // Set up Quill text-change handler to clean duplicates in real-time
-  useEffect(() => {
-    const quill = quillRef.current?.getEditor()
-    if (!quill) return
-
-    let isCleaning = false
-
-    const handleTextChange = () => {
-      // Prevent infinite loops
-      if (isCleaning) return
-      
-      const html = quill.root.innerHTML
-      const cleaned = cleanListContent(html)
-      
-      // Only update if content changed
-      if (cleaned !== html) {
-        isCleaning = true
-        const selection = quill.getSelection()
-        const length = quill.getLength()
-        
-        quill.root.innerHTML = cleaned
-        const newLength = quill.getLength()
-        
-        // Restore cursor position (adjust if content length changed)
-        if (selection) {
-          setTimeout(() => {
-            const adjustedIndex = Math.min(selection.index, newLength - 1)
-            quill.setSelection(adjustedIndex, selection.length)
-            isCleaning = false
-          }, 0)
-        } else {
-          isCleaning = false
-        }
-      }
-    }
-
-    quill.on('text-change', handleTextChange)
-    
-    return () => {
-      quill.off('text-change', handleTextChange)
-    }
-  }, []) // Empty dependency array - only set up once
-
   const updatePostMutation = useMutation(
     (postData) => blogApi.updatePost(id, postData),
     {
@@ -241,217 +198,65 @@ export default function EditPost() {
     })
   }
 
-  // Clean HTML content to remove duplicate list numbers/dots that Quill adds
-  // This uses aggressive regex and DOM manipulation to catch all patterns
-  const cleanListContent = (html) => {
-    if (!html || typeof html !== 'string') return html
-    
-    try {
-      // Use DOM manipulation for more reliable cleaning
-      const tempDiv = document.createElement('div')
-      tempDiv.innerHTML = html
-      
-      // Clean ordered list items - remove duplicate numbers
-      const olItems = tempDiv.querySelectorAll('ol li')
-      olItems.forEach(li => {
+  const handleContentChange = (content) => {
+    setFormData(prev => {
+      const updatedFormData = {
+        ...prev,
+        content,
+      }
+
+      if (postMentionsOkta(updatedFormData) && !updatedFormData.featuredImage) {
         try {
-          // Get the first text node (which often contains the duplicate number)
-          const walker = document.createTreeWalker(
-            li,
-            NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT,
-            {
-              acceptNode: function(node) {
-                // Only process text nodes and non-list elements
-                if (node.nodeType === Node.TEXT_NODE) return NodeFilter.FILTER_ACCEPT
-                if (node.nodeType === Node.ELEMENT_NODE && 
-                    !['OL', 'UL', 'LI'].includes(node.tagName)) {
-                  return NodeFilter.FILTER_ACCEPT
-                }
-                return NodeFilter.FILTER_REJECT
-              }
-            },
-            false
-          )
-          
-          let firstTextNode = true
-          let node
-          while (node = walker.nextNode()) {
-            if (node.nodeType === Node.TEXT_NODE) {
-              let text = node.textContent
-              
-              // More aggressive patterns to catch duplicates like "1. 1. " or "2. 2."
-              if (firstTextNode) {
-                // Remove patterns like: "1. 1. ", "2. 2. ", "10. 10. "
-                text = text.replace(/^(\s*)(\d+)\.\s*(\d+)\.\s*/g, '$1')
-                // Remove patterns like: "1. 1 ", "2. 2 "
-                text = text.replace(/^(\s*)(\d+)\.\s*(\d+)\s+/g, '$1')
-                // Remove single number patterns at start: "1. ", "2. ", etc.
-                text = text.replace(/^(\s*)(\d+)\.\s+/g, '$1')
-                // Remove just numbers at start: "1 ", "2 "
-                text = text.replace(/^(\s*)(\d+)\s+/g, '$1')
-                // Remove any leading number
-                text = text.replace(/^(\s*)(\d+)/g, '$1')
-                firstTextNode = false
-              }
-              
-              node.textContent = text
-            }
+          const oktaImage = getFeaturedImageForPost(updatedFormData, null)
+          if (oktaImage) {
+            updatedFormData.featuredImage = oktaImage
           }
-          
-          // Also check if the first child is a text node with duplicate numbers
-          if (li.firstChild && li.firstChild.nodeType === Node.TEXT_NODE) {
-            let firstText = li.firstChild.textContent
-            const originalText = firstText
-            // Remove duplicate number patterns
-            firstText = firstText.replace(/^(\s*)(\d+)\.\s*(\d+)\.\s*/g, '$1')
-            firstText = firstText.replace(/^(\s*)(\d+)\.\s*(\d+)\s+/g, '$1')
-            firstText = firstText.replace(/^(\s*)(\d+)\.\s+/g, '$1')
-            firstText = firstText.replace(/^(\s*)(\d+)\s+/g, '$1')
-            if (firstText !== originalText) {
-              li.firstChild.textContent = firstText
-            }
-          }
-        } catch (e) {
-          console.warn('Error cleaning ordered list item:', e)
+        } catch (error) {
+          console.warn('[EditPost] Error in content onChange Okta check:', error)
         }
-      })
-      
-      // Clean unordered list items - remove duplicate bullets
-      const ulItems = tempDiv.querySelectorAll('ul li')
-      ulItems.forEach(li => {
-        try {
-          const walker = document.createTreeWalker(
-            li,
-            NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT,
-            {
-              acceptNode: function(node) {
-                if (node.nodeType === Node.TEXT_NODE) return NodeFilter.FILTER_ACCEPT
-                if (node.nodeType === Node.ELEMENT_NODE && 
-                    !['OL', 'UL', 'LI'].includes(node.tagName)) {
-                  return NodeFilter.FILTER_ACCEPT
-                }
-                return NodeFilter.FILTER_REJECT
-              }
-            },
-            false
-          )
-          
-          let firstTextNode = true
-          let node
-          while (node = walker.nextNode()) {
-            if (node.nodeType === Node.TEXT_NODE) {
-              let text = node.textContent
-              
-              if (firstTextNode) {
-                // Remove all bullet patterns at the start
-                text = text.replace(/^(\s*)[•·▪▫◦‣⁃▪▫○●]\s*/g, '$1')
-                text = text.replace(/^(\s*)[\u2022\u2023\u25E6\u25AA\u25AB\u25CF\u25CB\u25A1\u25A0\u25C6\u25C7]\s*/g, '$1')
-                // Remove common bullet characters
-                text = text.replace(/^(\s*)[-*+]\s+/g, '$1')
-                firstTextNode = false
-              }
-              
-              node.textContent = text
-            }
-          }
-          
-          // Also check first child
-          if (li.firstChild && li.firstChild.nodeType === Node.TEXT_NODE) {
-            let firstText = li.firstChild.textContent
-            firstText = firstText.replace(/^(\s*)[•·▪▫◦‣⁃▪▫○●]\s*/g, '$1')
-            firstText = firstText.replace(/^(\s*)[\u2022\u2023\u25E6\u25AA\u25AB\u25CF\u25CB\u25A1\u25A0\u25C6\u25C7]\s*/g, '$1')
-            firstText = firstText.replace(/^(\s*)[-*+]\s+/g, '$1')
-            li.firstChild.textContent = firstText
-          }
-        } catch (e) {
-          console.warn('Error cleaning unordered list item:', e)
-        }
-      })
-      
-      return tempDiv.innerHTML
-    } catch (error) {
-      // If anything fails, return original HTML
-      console.warn('Error in cleanListContent:', error)
-      return html
-    }
+      }
+
+      return updatedFormData
+    })
   }
 
-  // ReactQuill modules configuration
-  const modules = useMemo(() => ({
-    toolbar: {
-      container: [
-        [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
-        [{ 'font': [] }],
-        [{ 'size': [] }],
-        ['bold', 'italic', 'underline', 'strike'],
-        [{ 'color': [] }, { 'background': [] }],
-        [{ 'script': 'sub'}, { 'script': 'super' }],
-        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-        [{ 'indent': '-1'}, { 'indent': '+1' }],
-        [{ 'direction': 'rtl' }],
-        [{ 'align': [] }],
-        ['blockquote', 'code-block'],
-        ['link', 'image', 'video'],
-        ['clean']
-      ]
-    },
-    syntax: {
-      highlight: text => text // Basic syntax highlighting
-    }
-  }), [])
-
-  const formats = [
-    'header', 'font', 'size',
-    'bold', 'italic', 'underline', 'strike',
-    'color', 'background',
-    'script',
-    'list', 'bullet', 'indent',
-    'direction', 'align',
-    'blockquote', 'code-block',
-    'link', 'image', 'video',
-    'clean'
-  ]
-
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    
-    // Clean content one more time before submitting to remove any duplicate numbers/dots
-    const cleanedContent = cleanListContent(formData.content)
-    
-    // Validate content (ReactQuill returns HTML, check if it's not just empty tags)
-    const contentText = cleanedContent.replace(/<[^>]*>/g, '').trim()
-    if (!contentText) {
-      toast.error('Content is required')
-      return
-    }
-    
-    // Process tags - handle both string (comma-separated) and array formats
-    let processedTags = [];
+  const buildPostData = () => {
+    let processedTags = []
     if (Array.isArray(formData.tags)) {
-      processedTags = formData.tags.filter(Boolean);
+      processedTags = formData.tags.filter(Boolean)
     } else if (typeof formData.tags === 'string') {
-      processedTags = formData.tags.split(',').map(tag => tag.trim()).filter(Boolean);
+      processedTags = formData.tags.split(',').map(tag => tag.trim()).filter(Boolean)
     }
-    
+
     const postData = {
       title: formData.title,
-      content: cleanedContent,
+      content: formData.content,
       excerpt: formData.excerpt || '',
       tags: processedTags,
       categoryId: formData.categoryId || undefined,
       seoTitle: formData.seoTitle || undefined,
       seoDescription: formData.seoDescription || undefined,
-      featuredImage: formData.featuredImage || undefined
+      featuredImage: formData.featuredImage || undefined,
     }
-    
-    // Remove undefined values
+
     Object.keys(postData).forEach(key => {
       if (postData[key] === undefined) {
         delete postData[key]
       }
     })
-    
-    updatePostMutation.mutate(postData)
+
+    return postData
+  }
+
+  const handleSubmit = (e) => {
+    e.preventDefault()
+
+    if (isEmptyHtml(formData.content)) {
+      toast.error('Content is required')
+      return
+    }
+
+    updatePostMutation.mutate(buildPostData())
   }
 
   const handlePublish = async () => {
@@ -459,46 +264,14 @@ export default function EditPost() {
     try {
       // Set flag to suppress update toast
       isPublishingRef.current = true
-      
-      // Clean content before saving
-      const cleanedContent = cleanListContent(formData.content)
-      
-      // Validate content before saving
-      const contentText = cleanedContent.replace(/<[^>]*>/g, '').trim()
-      if (!contentText) {
+
+      if (isEmptyHtml(formData.content)) {
         toast.error('Content is required')
         isPublishingRef.current = false
         return
       }
-      
-      // Process tags - handle both string (comma-separated) and array formats
-      let processedTags = [];
-      if (Array.isArray(formData.tags)) {
-        processedTags = formData.tags.filter(Boolean);
-      } else if (typeof formData.tags === 'string') {
-        processedTags = formData.tags.split(',').map(tag => tag.trim()).filter(Boolean);
-      }
-      
-      const postData = {
-        title: formData.title,
-        content: cleanedContent,
-        excerpt: formData.excerpt || '',
-        tags: processedTags,
-        categoryId: formData.categoryId || undefined,
-        seoTitle: formData.seoTitle || undefined,
-        seoDescription: formData.seoDescription || undefined,
-        featuredImage: formData.featuredImage || undefined
-      }
-      
-      // Remove undefined values
-      Object.keys(postData).forEach(key => {
-        if (postData[key] === undefined) {
-          delete postData[key]
-        }
-      })
 
-      // Save changes first (wait for it to complete)
-      const updateResult = await updatePostMutation.mutateAsync(postData)
+      const updateResult = await updatePostMutation.mutateAsync(buildPostData())
       
       if (updateResult.success) {
         // Then publish after successful save
@@ -529,43 +302,13 @@ export default function EditPost() {
     }
   }
 
-  // Calculate word count from HTML content
   const getWordCount = (htmlContent) => {
-    if (!htmlContent) return 0
-    
-    try {
-      // Create a temporary DOM element to parse HTML
-      const tempDiv = document.createElement('div')
-      tempDiv.innerHTML = htmlContent
-      
-      // Get text content (strips HTML tags)
-      const text = tempDiv.textContent || tempDiv.innerText || ''
-      
-      // Remove extra whitespace and split into words
-      const words = text.trim().split(/\s+/).filter(word => word.length > 0)
-      
-      return words.length
-    } catch (error) {
-      // Fallback: simple regex-based word count
-      const text = htmlContent.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
-      return text ? text.split(/\s+/).length : 0
-    }
+    const text = getPlainTextFromHtml(htmlContent)
+    if (!text) return 0
+    return text.split(/\s+/).filter(Boolean).length
   }
 
-  // Calculate character count (without HTML tags)
-  const getCharacterCount = (htmlContent) => {
-    if (!htmlContent) return 0
-    
-    try {
-      const tempDiv = document.createElement('div')
-      tempDiv.innerHTML = htmlContent
-      const text = tempDiv.textContent || tempDiv.innerText || ''
-      return text.length
-    } catch (error) {
-      // Fallback: simple regex-based character count
-      return htmlContent.replace(/<[^>]*>/g, '').length
-    }
-  }
+  const getCharacterCount = (htmlContent) => getPlainTextFromHtml(htmlContent).length
 
   // Get current word and character counts (memoized for performance)
   const wordCount = useMemo(() => getWordCount(formData.content), [formData.content])
@@ -671,67 +414,13 @@ export default function EditPost() {
                   <label htmlFor="content" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Content *
                   </label>
-                  <div className="rich-text-editor-wrapper">
-                    <ReactQuill
-                      ref={quillRef}
-                      theme="snow"
-                      value={formData.content}
-                      onChange={(value) => {
-                        setFormData(prev => {
-                          try {
-                            // Clean the content to remove duplicate list numbers/dots
-                            const cleanedValue = cleanListContent(value)
-                            const updatedFormData = {
-                              ...prev,
-                              content: cleanedValue
-                            }
-                            
-                            // Auto-assign Okta featured image if Okta is mentioned and no featured image is set
-                            if (postMentionsOkta(updatedFormData) && !updatedFormData.featuredImage) {
-                              try {
-                                const oktaImage = getFeaturedImageForPost(updatedFormData, null)
-                                if (oktaImage) {
-                                  updatedFormData.featuredImage = oktaImage
-                                }
-                              } catch (error) {
-                                console.warn('[EditPost] Error in content onChange Okta check:', error)
-                              }
-                            }
-                            
-                            return updatedFormData
-                          } catch (error) {
-                            // If cleaning fails, just use the original value
-                            console.warn('[EditPost] Error cleaning list content:', error)
-                            const updatedFormData = {
-                              ...prev,
-                              content: value
-                            }
-                            
-                            // Auto-assign Okta featured image if Okta is mentioned
-                            if (postMentionsOkta(updatedFormData) && !updatedFormData.featuredImage) {
-                              try {
-                                const oktaImage = getFeaturedImageForPost(updatedFormData, null)
-                                if (oktaImage) {
-                                  updatedFormData.featuredImage = oktaImage
-                                }
-                              } catch (error) {
-                                console.warn('[EditPost] Error in content onChange Okta check (fallback):', error)
-                              }
-                            }
-                            
-                            return updatedFormData
-                          }
-                        })
-                      }}
-                      modules={modules}
-                      formats={formats}
-                      placeholder="Start writing your post content... Use the toolbar to format text, add code blocks, lists, images, and more."
-                      style={{
-                        minHeight: '400px',
-                        marginBottom: '42px'
-                      }}
-                    />
-                  </div>
+                  <RichTextEditor
+                    key={id}
+                    ref={editorRef}
+                    value={formData.content}
+                    onChange={handleContentChange}
+                    placeholder="Start writing your post content... Use the toolbar to format text, add code blocks, lists, images, and more."
+                  />
                   <div className="mt-2 flex items-center justify-between">
                     <p className="text-sm text-gray-500 dark:text-gray-400">
                       Use the toolbar to format your content. Add code blocks, lists, images, and more.

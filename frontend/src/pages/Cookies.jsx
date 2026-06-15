@@ -1,4 +1,5 @@
 import { Helmet } from 'react-helmet-async'
+import { openCookiePreferences } from '../utils/cookieConsent'
 
 export default function Cookies() {
   return (
@@ -111,9 +112,15 @@ export default function Cookies() {
                 <li className="text-gray-700 dark:text-gray-300 mb-2">Reject all non-essential cookies (only essential cookies will be used)</li>
               </ul>
               <p className="text-gray-700 dark:text-gray-300 mb-4">
-                Your consent preferences are stored in your browser's local storage and will be remembered for future visits. 
-                You can change your preferences at any time by clearing your browser's local storage or contacting us.
+                Your consent preferences are stored in your browser&apos;s local storage and will be remembered for future visits.
               </p>
+              <button
+                type="button"
+                onClick={openCookiePreferences}
+                className="btn-primary text-sm px-4 py-2"
+              >
+                Manage Cookie Preferences
+              </button>
             </section>
 
             <section className="mb-8">

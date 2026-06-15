@@ -21,8 +21,10 @@ const Cookies = lazy(() => import('./pages/Cookies'))
 const Disclaimer = lazy(() => import('./pages/Disclaimer'))
 const NotFound = lazy(() => import('./pages/NotFound'))
 
+// Admin login must load eagerly so it shares the same AuthContext instance as AuthProvider
+import AdminLogin from './pages/admin/Login'
+
 // Lazy load admin pages (larger bundles)
-const AdminLogin = lazy(() => import('./pages/admin/Login'))
 const AdminDashboard = lazy(() => import('./pages/admin/Dashboard'))
 const CreatePost = lazy(() => import('./pages/admin/CreatePost'))
 const EditPost = lazy(() => import('./pages/admin/EditPost'))
@@ -38,14 +40,8 @@ const PageLoader = () => (
   </div>
 )
 
-// Contexts
-import { AuthProvider } from './contexts/AuthContext'
-
 // Hooks
 import { useThemeStore } from './stores/themeStore'
-
-// Components
-import CookieConsent from './components/UI/CookieConsent'
 
 // Analytics (initializes when cookie consent allows)
 import './services/analytics'
@@ -67,10 +63,9 @@ function App() {
   }, [theme])
 
   return (
-    <AuthProvider>
-      <div className="min-h-screen bg-white dark:bg-gray-900 transition-colors duration-200">
-        <Suspense fallback={<PageLoader />}>
-          <Routes>
+    <div className="min-h-screen bg-white dark:bg-gray-900 transition-colors duration-200">
+      <Suspense fallback={<PageLoader />}>
+        <Routes>
             <Route path="/" element={<Layout />}>
               {/* Public routes */}
               <Route index element={<Home />} />
@@ -115,11 +110,9 @@ function App() {
               {/* Catch-all for invalid admin routes - redirect to 404 (must be last) */}
               <Route path="*" element={<NotFound />} />
             </Route>
-          </Routes>
-        </Suspense>
-        <CookieConsent />
-      </div>
-    </AuthProvider>
+        </Routes>
+      </Suspense>
+    </div>
   )
 }
 

@@ -12,7 +12,7 @@ import {
 } from '@heroicons/react/24/outline'
 import { formatRelativeTime, formatAbsoluteTime, getPostDisplayDate } from '../utils/dateUtils'
 import { siteConfig } from '../config/site'
-// Note: We're using HTML rendering instead of Markdown since ReactQuill outputs HTML
+// Note: We're using HTML rendering since the admin editor outputs HTML
 // The backend sanitizes the HTML content, so it's safe to render
 import { blogApi } from '../services/api'
 import LoadingSpinner from '../components/UI/LoadingSpinner'

@@ -295,172 +295,74 @@
   @apply font-bold;
 }
 
-/* React Quill Editor Styles */
+/* Tiptap Editor Styles */
 .rich-text-editor-wrapper {
-  @apply bg-white dark:bg-gray-800 rounded-md border border-gray-300 dark:border-gray-600;
-  position: relative;
+  @apply bg-white dark:bg-gray-800 rounded-md border border-gray-300 dark:border-gray-600 overflow-hidden;
 }
 
-.rich-text-editor-wrapper .ql-toolbar {
-  @apply border-b border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 rounded-t-md;
+.rich-text-editor-wrapper .editor-toolbar {
   position: sticky;
   top: 0;
   z-index: 50;
-  padding: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
 }
 
-.rich-text-editor-wrapper .ql-toolbar .ql-stroke {
-  @apply stroke-gray-700 dark:stroke-gray-300;
-}
-
-.rich-text-editor-wrapper .ql-toolbar .ql-fill {
-  @apply fill-gray-700 dark:fill-gray-300;
-}
-
-.rich-text-editor-wrapper .ql-toolbar .ql-picker-label {
-  @apply text-gray-700 dark:text-gray-300;
-}
-
-.rich-text-editor-wrapper .ql-toolbar .ql-picker-options {
-  @apply bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600;
-}
-
-.rich-text-editor-wrapper .ql-toolbar .ql-picker-item {
-  @apply text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700;
-}
-
-.rich-text-editor-wrapper .ql-toolbar button:hover,
-.rich-text-editor-wrapper .ql-toolbar button:focus,
-.rich-text-editor-wrapper .ql-toolbar button.ql-active {
-  @apply bg-gray-200 dark:bg-gray-600;
-}
-
-.rich-text-editor-wrapper .ql-toolbar button:hover .ql-stroke,
-.rich-text-editor-wrapper .ql-toolbar button:focus .ql-stroke,
-.rich-text-editor-wrapper .ql-toolbar button.ql-active .ql-stroke {
-  @apply stroke-gray-900 dark:stroke-gray-100;
-}
-
-.rich-text-editor-wrapper .ql-toolbar button:hover .ql-fill,
-.rich-text-editor-wrapper .ql-toolbar button:focus .ql-fill,
-.rich-text-editor-wrapper .ql-toolbar button.ql-active .ql-fill {
-  @apply fill-gray-900 dark:fill-gray-100;
-}
-
-.rich-text-editor-wrapper .ql-container {
-  @apply border-0 bg-white dark:bg-gray-800 rounded-b-md;
-  font-family: inherit;
-}
-
-.rich-text-editor-wrapper .ql-editor {
-  @apply text-gray-900 dark:text-gray-100 min-h-[400px];
+.rich-text-editor-wrapper .tiptap-editor-content,
+.rich-text-editor-wrapper .ProseMirror {
+  @apply min-h-[400px] px-4 py-3 text-gray-900 outline-none dark:text-gray-100;
   font-size: 16px;
   line-height: 1.6;
 }
 
-.rich-text-editor-wrapper .ql-editor.ql-blank::before {
-  @apply text-gray-400 dark:text-gray-500;
-  font-style: normal;
+.rich-text-editor-wrapper .ProseMirror-focused {
+  @apply ring-2 ring-primary-500/20;
 }
 
-/* Code block styling in editor */
-.rich-text-editor-wrapper .ql-editor pre.ql-syntax {
-  @apply bg-gray-900 dark:bg-gray-950 text-gray-100 p-4 rounded-lg overflow-x-auto;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+.rich-text-editor-wrapper .tiptap-editor-content p.is-editor-empty:first-child::before {
+  @apply text-gray-400 dark:text-gray-500;
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
+.rich-text-editor-wrapper .tiptap-editor-content pre {
+  @apply my-4 overflow-x-auto rounded-lg bg-gray-900 p-4 text-gray-100 dark:bg-gray-950;
   font-family: 'Courier New', Courier, monospace;
   font-size: 14px;
   line-height: 1.5;
 }
 
-/* Code block placeholder styling */
-.rich-text-editor-wrapper .ql-editor code {
-  @apply bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 px-1.5 py-0.5 rounded;
+.rich-text-editor-wrapper .tiptap-editor-content code {
+  @apply rounded bg-gray-100 px-1.5 py-0.5 text-gray-800 dark:bg-gray-800 dark:text-gray-200;
   font-family: 'Courier New', Courier, monospace;
   font-size: 0.9em;
 }
 
-.rich-text-editor-wrapper .ql-editor pre {
-  @apply bg-gray-900 dark:bg-gray-950 text-gray-100;
-  margin: 1rem 0;
-  padding: 1rem;
-  border-radius: 0.5rem;
-  overflow-x: auto;
+.rich-text-editor-wrapper .tiptap-editor-content img {
+  @apply my-4 h-auto max-w-full rounded-lg;
 }
 
-/* Image styling in editor */
-.rich-text-editor-wrapper .ql-editor img {
-  @apply max-w-full h-auto rounded-lg my-4;
-  display: block;
-  margin-left: auto;
-  margin-right: auto;
+.rich-text-editor-wrapper .tiptap-editor-content blockquote {
+  @apply my-4 border-l-4 border-primary-500 pl-4 italic text-gray-700 dark:border-primary-400 dark:text-gray-300;
 }
 
-/* Blockquote styling */
-.rich-text-editor-wrapper .ql-editor blockquote {
-  @apply border-l-4 border-primary-500 dark:border-primary-400 pl-4 my-4 italic text-gray-700 dark:text-gray-300;
+.rich-text-editor-wrapper .tiptap-editor-content ul,
+.rich-text-editor-wrapper .tiptap-editor-content ol {
+  @apply my-4 pl-6;
 }
 
-/* List styling - Fix duplicate numbering issue in Quill */
-.rich-text-editor-wrapper .ql-editor ul,
-.rich-text-editor-wrapper .ql-editor ol {
-  @apply my-4;
-  padding-left: 1.5rem;
-  margin-left: 0;
-  list-style-position: outside;
+.rich-text-editor-wrapper .tiptap-editor-content a {
+  @apply text-primary-600 hover:underline dark:text-primary-400;
 }
 
-.rich-text-editor-wrapper .ql-editor ul {
-  list-style-type: disc;
+.rich-text-editor-wrapper .tiptap-editor-content iframe {
+  @apply my-4 aspect-video w-full max-w-full rounded-lg;
 }
 
-.rich-text-editor-wrapper .ql-editor ol {
-  list-style-type: decimal;
-  list-style-position: outside;
-}
-
-.rich-text-editor-wrapper .ql-editor ul li,
-.rich-text-editor-wrapper .ql-editor ol li {
-  display: list-item;
-  list-style-position: outside;
-  padding-left: 0;
-  margin-left: 0;
-  padding-right: 0.5rem;
-}
-
-/* Ensure proper list styling */
-.rich-text-editor-wrapper .ql-editor ol li {
-  list-style-type: decimal;
-  list-style-position: outside;
-}
-
-.rich-text-editor-wrapper .ql-editor ul li {
-  list-style-type: disc;
-  list-style-position: outside;
-}
-
-/* Fix for duplicate numbering: Quill may add numbers via ::before pseudo-elements */
-/* Only target Quill-specific additions, not the native browser numbering */
-.rich-text-editor-wrapper .ql-editor ol li.ql-indent-1::before,
-.rich-text-editor-wrapper .ql-editor ol li.ql-indent-2::before,
-.rich-text-editor-wrapper .ql-editor ol li.ql-indent-3::before,
-.rich-text-editor-wrapper .ql-editor ol li.ql-indent-4::before,
-.rich-text-editor-wrapper .ql-editor ol li.ql-indent-5::before,
-.rich-text-editor-wrapper .ql-editor ol li.ql-indent-6::before,
-.rich-text-editor-wrapper .ql-editor ol li.ql-indent-7::before,
-.rich-text-editor-wrapper .ql-editor ol li.ql-indent-8::before {
-  display: none !important;
-  content: "" !important;
-}
-
-/* Link styling */
-.rich-text-editor-wrapper .ql-editor a {
-  @apply text-primary-600 dark:text-primary-400 hover:underline;
-}
-
-/* Blog post content styling - for rendered HTML from ReactQuill */
+/* Blog post content styling - for rendered HTML from the rich text editor */
 .blog-content {
   @apply text-gray-900 dark:text-gray-100;
 }

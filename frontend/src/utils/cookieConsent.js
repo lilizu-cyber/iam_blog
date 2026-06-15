@@ -32,6 +32,7 @@ export function getCookieConsent() {
     return consentData
   } catch (error) {
     console.error('Error reading cookie consent:', error)
+    localStorage.removeItem(COOKIE_CONSENT_KEY)
     return null
   }
 }
@@ -72,5 +73,14 @@ export function canUsePreferences() {
  */
 export function clearCookieConsent() {
   localStorage.removeItem(COOKIE_CONSENT_KEY)
+}
+
+/**
+ * Re-open the cookie preferences banner
+ */
+export function openCookiePreferences() {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('openCookiePreferences'))
+  }
 }
 
