@@ -710,7 +710,7 @@ class BlogPostQueryHandlers {
       slug: post.slug,
       author: {
         id: post.authorId,
-        name: post.authorName || site.authorName,
+        name: site.getPublicAuthorName(post.authorName),
         email: post.authorEmail || site.authorEmail,
         avatar: post.authorAvatar
       },

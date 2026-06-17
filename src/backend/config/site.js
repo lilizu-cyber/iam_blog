@@ -7,4 +7,11 @@ module.exports = {
   authorName: process.env.SITE_AUTHOR_NAME || 'Ilirijana Zuka',
   authorFirstName: process.env.SITE_AUTHOR_FIRST_NAME || 'Ilirijana',
   authorEmail: process.env.SITE_AUTHOR_EMAIL || process.env.ADMIN_EMAIL || 'admin@example.com',
+  getPublicAuthorName(name) {
+    if (!name || String(name).trim().toLowerCase() === 'admin') {
+      return this.authorName
+    }
+
+    return String(name).trim()
+  },
 };

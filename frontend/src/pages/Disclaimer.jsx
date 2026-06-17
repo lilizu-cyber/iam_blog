@@ -1,15 +1,16 @@
 import { Link } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
-import { siteConfig } from '../config/site'
+
+const siteBrand = 'cyberiam.blog'
 
 export default function Disclaimer() {
   return (
     <>
       <Helmet>
-        <title>Disclaimer - {siteConfig.siteName}</title>
+        <title>Disclaimer - {siteBrand}</title>
         <meta
           name="description"
-          content={`Disclaimer for ${siteConfig.siteName} — educational cybersecurity and IAM content by ${siteConfig.authorName}.`}
+          content={`Disclaimer for ${siteBrand} — educational cybersecurity and IAM content.`}
         />
       </Helmet>
 
@@ -26,9 +27,9 @@ export default function Disclaimer() {
             <section>
               <h2 className="text-2xl font-bold text-[#00FBFF]">Educational purpose</h2>
               <p>
-                {siteConfig.siteName} is operated by {siteConfig.authorName} and publishes educational
-                content about cybersecurity and identity &amp; access management (IAM). Articles,
-                guides, and opinions on this site are provided for general information only.
+                {siteBrand} publishes educational content about cybersecurity and identity &amp; access
+                management (IAM). Articles, guides, and opinions on this site are provided for general
+                information only.
               </p>
             </section>
 
@@ -63,8 +64,7 @@ export default function Disclaimer() {
               <h2 className="text-2xl font-bold text-[#00FBFF]">Advertising</h2>
               <p>
                 We may display advertisements through Google AdSense. Ad content is served by third
-                parties and does not necessarily reflect the views of {siteConfig.authorName} or{' '}
-                {siteConfig.siteName}. See our{' '}
+                parties and does not necessarily reflect the views of {siteBrand}. See our{' '}
                 <Link to="/privacy" className="text-[#00FBFF] hover:underline">
                   Privacy Policy
                 </Link>{' '}

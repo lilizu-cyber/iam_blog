@@ -5,3 +5,11 @@ export const siteConfig = {
   authorFirstName: import.meta.env.VITE_SITE_AUTHOR_FIRST_NAME || 'Ilirijana',
   authorEmail: import.meta.env.VITE_SITE_AUTHOR_EMAIL || 'admin@example.com',
 }
+
+export function getPublicAuthorName(name) {
+  if (!name || String(name).trim().toLowerCase() === 'admin') {
+    return siteConfig.authorName
+  }
+
+  return String(name).trim()
+}

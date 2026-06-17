@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Helmet } from 'react-helmet-async'
 import AdminHeader from '../../components/Admin/AdminHeader'
-import { siteConfig } from '../../config/site'
+import { getPublicAuthorName } from '../../config/site'
 import { Link } from 'react-router-dom'
 import { PlusIcon, PencilIcon, EyeIcon, TrashIcon, ArrowPathIcon } from '@heroicons/react/24/outline'
 import { useQuery, useMutation, useQueryClient } from 'react-query'
@@ -242,7 +242,7 @@ export default function ManagePosts() {
                           {getStatusBadge(post.status)}
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
-                          {post.author?.name || siteConfig.authorName}
+                          {getPublicAuthorName(post.author?.name)}
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
                           {formatDate(post)}

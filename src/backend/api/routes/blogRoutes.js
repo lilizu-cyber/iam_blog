@@ -486,7 +486,7 @@ module.exports = (commandBus, queryBus, readModelStore) => {
           status: post.status,
           author: {
             id: post.authorId,
-            name: post.authorName || site.authorName,
+            name: site.getPublicAuthorName(post.authorName),
             email: post.authorEmail || site.authorEmail
           },
           category: post.categoryId ? {

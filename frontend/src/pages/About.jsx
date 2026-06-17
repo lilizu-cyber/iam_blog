@@ -8,7 +8,8 @@ import {
 } from '@heroicons/react/24/outline'
 import PageHero from '../components/UI/PageHero'
 import GridSection from '../components/UI/GridSection'
-import { siteConfig } from '../config/site'
+
+const siteBrand = 'cyberiam.blog'
 
 const focusAreas = [
   {
@@ -35,39 +36,38 @@ export default function About() {
   return (
     <>
       <Helmet>
-        <title>About {siteConfig.authorName} - {siteConfig.siteName}</title>
+        <title>About {siteBrand}</title>
         <meta
           name="description"
-          content={`${siteConfig.siteName} is a cybersecurity and IAM blog by ${siteConfig.authorName}. Practical guides and analysis for security professionals.`}
+          content={`${siteBrand} is a cybersecurity and IAM blog with practical guides and analysis for security professionals.`}
         />
       </Helmet>
 
       <div className="min-h-screen bg-black">
         <PageHero
           icon={AcademicCapIcon}
-          title={`About ${siteConfig.authorFirstName}`}
-          subtitle={`The person behind ${siteConfig.siteName}`}
+          title={`About ${siteBrand}`}
+          subtitle="Cybersecurity and IAM insights for practitioners and learners"
         />
 
         <GridSection className="py-16 sm:py-24">
           <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
             <div className="rounded-sm border border-[#00FBFF]/15 bg-black/50 p-8 backdrop-blur-sm">
               <h2 className="mb-6 text-2xl font-semibold text-white grid-hero-title-glow">
-                Hi, I&apos;m {siteConfig.authorFirstName}
+                Welcome to {siteBrand}
               </h2>
               <div className="space-y-4 text-white/75 leading-relaxed">
                 <p>
-                  I write {siteConfig.siteName} to
-                  share practical insights on cybersecurity and identity &amp; access management (IAM).
+                  {siteBrand} shares practical insights on cybersecurity and identity &amp; access
+                  management (IAM).
                 </p>
                 <p>
                   This site exists to help security practitioners, IAM specialists, and curious learners
                   understand real-world challenges: how access is granted, how threats evolve, and how
-                  to build more resilient systems without drowning in buzzwords. I would be happy to grow
-                  the community and welcome anyone interested in contributing to the blog, have conversations, or just say hi.
-                  I&apos;m open for collaboration and feedback, so please feel free to reach out to me.
+                  to build more resilient systems without drowning in buzzwords. We welcome anyone interested
+                  in contributing to the blog, having conversations, or saying hello. {siteBrand} is open
+                  for collaboration and feedback, so please feel free to reach out.
                 </p>
-
               </div>
             </div>
           </div>
@@ -80,7 +80,7 @@ export default function About() {
                 What you&apos;ll find here
               </h2>
               <p className="mt-4 text-lg text-white/60">
-                Focused coverage of the topics I work with most
+                Focused coverage of the topics covered most on {siteBrand}
               </p>
             </div>
             <div className="mx-auto mt-12 grid max-w-5xl grid-cols-1 gap-8 lg:grid-cols-3">
@@ -104,7 +104,7 @@ export default function About() {
               Get in touch
             </h2>
             <p className="mt-4 text-white/60">
-              Questions, corrections, or collaboration ideas? I&apos;d love to hear from you.
+              Questions, corrections, or collaboration ideas? We&apos;d love to hear from you.
             </p>
             <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
               <Link
@@ -117,7 +117,7 @@ export default function About() {
                 to="/contact"
                 className="rounded-sm border border-[#00FBFF]/30 px-6 py-3 text-sm font-semibold text-[#00FBFF] transition-colors hover:border-[#00FBFF] hover:bg-[#00FBFF]/10"
               >
-                Contact me
+                Contact us
               </Link>
             </div>
           </div>

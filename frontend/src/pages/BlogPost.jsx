@@ -11,7 +11,7 @@ import {
   BookmarkIcon
 } from '@heroicons/react/24/outline'
 import { formatRelativeTime, formatAbsoluteTime, getPostDisplayDate } from '../utils/dateUtils'
-import { siteConfig } from '../config/site'
+import { getPublicAuthorName } from '../config/site'
 // Note: We're using HTML rendering since the admin editor outputs HTML
 // The backend sanitizes the HTML content, so it's safe to render
 import { blogApi } from '../services/api'
@@ -68,7 +68,7 @@ export default function BlogPost() {
   const postUrl = `${window.location.origin}/blog/${post.slug}`
   const siteUrl = window.location.origin
   const displayDate = getPostDisplayDate(post.timestamps)
-  const authorName = post.author.name === 'Admin' ? siteConfig.authorName : (post.author.name || siteConfig.authorName)
+  const authorName = getPublicAuthorName(post.author.name)
 
   // Handle share functionality
   const handleShare = async () => {
@@ -373,59 +373,6 @@ export default function BlogPost() {
                 {adsConfig.slots.blogPostSidebar && (
                   <SidebarAd adSlot={adsConfig.slots.blogPostSidebar} />
                 )}
-
-                {/* Author Info */}
-                <div className="card p-6">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                    About the Author
-                  </h3>
-                  <div className="flex items-center space-x-3">
-                    {post.author.avatar ? (
-                      <img
-                        src={post.author.avatar}
-                        alt={authorName}
-                        className="h-12 w-12 rounded-full"
-                      />
-                    ) : (
-                      <div className="h-12 w-12 rounded-full bg-primary-600 flex items-center justify-center text-white font-semibold">
-                        {authorName.charAt(0)}
-                      </div>
-                    )}
-                    <div>
-                      <div className="font-medium text-gray-900 dark:text-white">
-                        {authorName}
-                      </div>
-                      <div className="text-sm text-gray-500 dark:text-gray-400">
-                        Security Expert
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Article Stats */}
-                <div className="card p-6">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                    Article Stats
-                  </h3>
-                  <div className="space-y-3">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600 dark:text-gray-400">Views</span>
-                      <span className="font-medium">{post.metadata.viewCount}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600 dark:text-gray-400">Reading Time</span>
-                      <span className="font-medium">{post.metadata.readingTime} min</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600 dark:text-gray-400">Word Count</span>
-                      <span className="font-medium">{post.metadata.wordCount}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600 dark:text-gray-400">Likes</span>
-                      <span className="font-medium">{post.metadata.likeCount}</span>
-                    </div>
-                  </div>
-                </div>
 
                 {/* Tags */}
                 {post.tags.length > 0 && (

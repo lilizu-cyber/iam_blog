@@ -1,5 +1,4 @@
 import { Link } from 'react-router-dom'
-import { siteConfig } from '../../config/site'
 
 const navigation = {
   main: [
@@ -34,12 +33,12 @@ export default function Footer() {
           <div className="xl:col-span-1">
             <Link to="/" className="inline-block">
               <span className="text-xl font-bold uppercase tracking-[0.2em] text-[#00FBFF] grid-logo-glow">
-                cyberiam
+                cyberiam.blog
               </span>
             </Link>
             <p className="mt-4 max-w-md text-sm text-white/60">
-              Cybersecurity and IAM insights by {siteConfig.authorName}. Practical guides and analysis
-              for security professionals.
+              Cybersecurity and IAM insights. Practical guides and analysis for security
+              professionals.
             </p>
           </div>
 
@@ -105,18 +104,9 @@ export default function Footer() {
 
         {/* Bottom */}
         <div className="mt-12 border-t border-[#00FBFF]/10 pt-8">
-          <div className="flex flex-col items-center justify-between md:flex-row">
-            <p className="text-sm text-white/50">
-              &copy; {new Date().getFullYear()} cyberiam. All rights reserved.
-            </p>
-            <div className="mt-4 flex items-center space-x-4 text-sm text-white/50 md:mt-0">
-              <Link to="/disclaimer" className="hover:text-[#00FBFF]">
-                Disclaimer
-              </Link>
-              <span className="text-[#00FBFF]/40">•</span>
-              <span>© {siteConfig.authorName}</span>
-            </div>
-          </div>
+          <p className="text-sm text-white/50">
+            &copy; {new Date().getFullYear()} cyberiam.blog
+          </p>
         </div>
       </div>
     </footer>
