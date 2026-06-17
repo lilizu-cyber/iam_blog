@@ -300,7 +300,8 @@
   @apply bg-white dark:bg-gray-800 rounded-md border border-gray-300 dark:border-gray-600 overflow-hidden;
 }
 
-.rich-text-editor-wrapper .editor-toolbar {
+.rich-text-editor-wrapper .editor-toolbar,
+.simple-editor-toolbar {
   position: sticky;
   top: 0;
   z-index: 50;
@@ -309,11 +310,16 @@
   -webkit-backdrop-filter: blur(8px);
 }
 
+.simple-editor-bubble-menu {
+  z-index: 60;
+}
+
 .rich-text-editor-wrapper .tiptap-editor-content,
+.rich-text-editor-wrapper .simple-editor-content,
 .rich-text-editor-wrapper .ProseMirror {
-  @apply min-h-[400px] px-4 py-3 text-gray-900 outline-none dark:text-gray-100;
+  @apply min-h-[420px] px-5 py-4 text-gray-900 outline-none dark:text-gray-100;
   font-size: 16px;
-  line-height: 1.6;
+  line-height: 1.7;
 }
 
 .rich-text-editor-wrapper .ProseMirror-focused {
@@ -341,8 +347,29 @@
   font-size: 0.9em;
 }
 
-.rich-text-editor-wrapper .tiptap-editor-content img {
-  @apply my-4 h-auto max-w-full rounded-lg;
+.rich-text-editor-wrapper .tiptap-editor-content img,
+.rich-text-editor-wrapper .simple-editor-image {
+  @apply my-4 h-auto max-w-full rounded-lg shadow-sm ring-1 ring-gray-200 dark:ring-gray-700;
+}
+
+.rich-text-editor-wrapper .tiptap-editor-content ul[data-type='taskList'],
+.rich-text-editor-wrapper .simple-editor-content ul[data-type='taskList'] {
+  @apply my-4 list-none pl-0;
+}
+
+.rich-text-editor-wrapper .tiptap-editor-content ul[data-type='taskList'] li,
+.rich-text-editor-wrapper .simple-editor-content ul[data-type='taskList'] li {
+  @apply flex items-start gap-2;
+}
+
+.rich-text-editor-wrapper .tiptap-editor-content ul[data-type='taskList'] li label,
+.rich-text-editor-wrapper .simple-editor-content ul[data-type='taskList'] li label {
+  @apply mt-1;
+}
+
+.rich-text-editor-wrapper .tiptap-editor-content ul[data-type='taskList'] li div,
+.rich-text-editor-wrapper .simple-editor-content ul[data-type='taskList'] li div {
+  @apply flex-1;
 }
 
 .rich-text-editor-wrapper .tiptap-editor-content blockquote {
@@ -352,6 +379,18 @@
 .rich-text-editor-wrapper .tiptap-editor-content ul,
 .rich-text-editor-wrapper .tiptap-editor-content ol {
   @apply my-4 pl-6;
+}
+
+.rich-text-editor-wrapper .tiptap-editor-content ul:not([data-type='taskList']) {
+  @apply list-disc;
+}
+
+.rich-text-editor-wrapper .tiptap-editor-content ol {
+  @apply list-decimal;
+}
+
+.rich-text-editor-wrapper .tiptap-editor-content li > p {
+  @apply my-0;
 }
 
 .rich-text-editor-wrapper .tiptap-editor-content a {
@@ -433,7 +472,15 @@
 }
 
 .blog-content img {
-  @apply max-w-full h-auto rounded-lg my-4;
+  @apply max-w-full h-auto rounded-lg my-4 shadow-sm ring-1 ring-gray-200 dark:ring-gray-700;
+}
+
+.blog-content ul[data-type='taskList'] {
+  @apply my-4 list-none pl-0;
+}
+
+.blog-content ul[data-type='taskList'] li {
+  @apply flex items-start gap-2;
 }
 
 .blog-content strong {

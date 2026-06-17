@@ -13,6 +13,7 @@ import {
 import { formatRelativeTime, formatAbsoluteTime, getPostDisplayDate } from '../utils/dateUtils'
 import { getPublicAuthorName } from '../config/site'
 import { getPostHeroTags } from '../utils/postDisplay'
+import { resolveContentUploadUrls } from '../utils/apiUrl'
 // Note: We're using HTML rendering since the admin editor outputs HTML
 // The backend sanitizes the HTML content, so it's safe to render
 import { blogApi } from '../services/api'
@@ -325,7 +326,7 @@ export default function BlogPost() {
               {post.content && post.content.trim() ? (
                 <div 
                   className="prose prose-lg dark:prose-invert max-w-none text-left blog-content"
-                  dangerouslySetInnerHTML={{ __html: post.content }}
+                  dangerouslySetInnerHTML={{ __html: resolveContentUploadUrls(post.content) }}
                 />
               ) : (
                 <div className="prose prose-lg dark:prose-invert max-w-none text-left">
