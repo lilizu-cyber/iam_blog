@@ -12,6 +12,7 @@ import {
 } from '@heroicons/react/24/outline'
 import { formatRelativeTime, formatAbsoluteTime, getPostDisplayDate } from '../utils/dateUtils'
 import { getPublicAuthorName } from '../config/site'
+import { getPostHeroTags } from '../utils/postDisplay'
 // Note: We're using HTML rendering since the admin editor outputs HTML
 // The backend sanitizes the HTML content, so it's safe to render
 import { blogApi } from '../services/api'
@@ -69,6 +70,7 @@ export default function BlogPost() {
   const siteUrl = window.location.origin
   const displayDate = getPostDisplayDate(post.timestamps)
   const authorName = getPublicAuthorName(post.author.name)
+  const { flags: displayFlags, tags: displayTags } = getPostHeroTags(post)
 
   // Handle share functionality
   const handleShare = async () => {
@@ -268,13 +270,13 @@ export default function BlogPost() {
               <div className="mx-auto max-w-4xl px-4 py-16 sm:px-6 lg:px-8">
                 {/* Tags */}
                 <div className="flex flex-wrap gap-2 mb-4">
-                  {post.flags.isSecurityRelated && (
+                  {displayFlags.isSecurityRelated && (
                     <span className="badge bg-security-600 text-white">Security</span>
                   )}
-                  {post.flags.isIAMRelated && (
+                  {displayFlags.isIAMRelated && (
                     <span className="badge bg-iam-600 text-white">IAM</span>
                   )}
-                  {post.tags.slice(0, 3).map((tag) => (
+                  {displayTags.map((tag) => (
                     <span key={tag} className="badge bg-white/20 text-white backdrop-blur-sm">
                       {tag}
                     </span>
@@ -375,13 +377,13 @@ export default function BlogPost() {
                 )}
 
                 {/* Tags */}
-                {post.tags.length > 0 && (
+                {displayTags.length > 0 && (
                   <div className="card p-6">
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                       Tags
                     </h3>
                     <div className="flex flex-wrap gap-2">
-                      {post.tags.map((tag) => (
+                      {displayTags.map((tag) => (
                         <span key={tag} className="badge-gray">
                           {tag}
                         </span>

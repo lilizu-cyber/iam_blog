@@ -1,10 +1,33 @@
 const logger = require('../../utils/logger');
 const site = require('../../config/site');
+const BlogPostProjection = require('../../readModels/projections/BlogPostProjection');
 
 class BlogPostQueryHandlers {
   constructor(readModelStore) {
     this.readModelStore = readModelStore;
     this.modelName = 'BlogPost';
+    this.postProjection = new BlogPostProjection(null);
+  }
+
+  normalizeTags(tags) {
+    if (Array.isArray(tags)) {
+      return tags.filter(Boolean).map(String);
+    }
+
+    if (typeof tags === 'string' && tags.trim()) {
+      try {
+        const parsed = JSON.parse(tags);
+        if (Array.isArray(parsed)) {
+          return parsed.filter(Boolean).map(String);
+        }
+      } catch (error) {
+        // fall through to comma-separated parsing
+      }
+
+      return tags.split(',').map((tag) => tag.trim()).filter(Boolean);
+    }
+
+    return [];
   }
 
   // Get blog post by ID
@@ -691,6 +714,14 @@ class BlogPostQueryHandlers {
   formatBlogPost(post) {
     // Ensure content is always a string (handle null/undefined)
     const content = post.content || '';
+    const tags = this.normalizeTags(post.tags);
+    const classificationData = {
+      title: post.title,
+      content,
+      excerpt: post.excerpt,
+      tags,
+      categoryId: post.categoryId,
+    };
     
     // Log warning if content is missing
     if (!post.content || post.content.trim() === '') {
@@ -719,7 +750,7 @@ class BlogPostQueryHandlers {
         name: post.categoryName,
         slug: post.categorySlug
       } : null,
-      tags: post.tags,
+      tags,
       status: post.status,
       seo: {
         title: post.seoTitle,
@@ -736,8 +767,8 @@ class BlogPostQueryHandlers {
         popularityScore: post.popularityScore
       },
       flags: {
-        isSecurityRelated: post.isSecurityRelated,
-        isIAMRelated: post.isIAMRelated
+        isSecurityRelated: this.postProjection.isSecurityRelated(classificationData),
+        isIAMRelated: this.postProjection.isIAMRelated(classificationData),
       },
       timestamps: {
         createdAt: post.createdAt,
