@@ -20,7 +20,7 @@ const http = require('http');
 // Configuration
 const BASE_URL = process.env.BACKEND_URL || 'http://localhost:3001';
 const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'admin';
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'Schlurfend.?.123';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'local-test-admin-password';
 
 // Color codes for terminal output
 const colors = {

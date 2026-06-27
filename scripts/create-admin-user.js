@@ -42,7 +42,10 @@ async function createAdminUser() {
 
     // Get admin credentials from environment or use defaults
     const adminUsername = process.env.ADMIN_USERNAME || 'admin';
-    const adminPassword = process.env.ADMIN_PASSWORD || 'Schlurfend.?.123';
+    const adminPassword = process.env.ADMIN_PASSWORD;
+    if (!adminPassword || adminPassword.length < 12) {
+      throw new Error('Set ADMIN_PASSWORD in .env (minimum 12 characters) before creating an admin user.');
+    }
     const adminEmail = process.env.ADMIN_EMAIL || 'admin@example.com';
     const site = require('../src/backend/config/site');
 

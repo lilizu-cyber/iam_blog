@@ -2,7 +2,7 @@ const { test, expect } = require('@playwright/test');
 
 // Test credentials (should match your .env or test setup)
 const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'admin';
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'Schlurfend.?.123';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'ci-test-admin-password-min-32-chars';
 
 test.describe('Admin Flows', () => {
   test.beforeEach(async ({ page }) => {

@@ -29,6 +29,7 @@
     "test:e2e:debug": "playwright test --debug",
     "setup:db": "node scripts/setup-postgresql.js",
     "create:admin": "node scripts/create-admin-user.js",
+    "reset:admin-password": "node scripts/reset-admin-password.js",
     "test:auth": "node scripts/test-auth.js",
     "generate:jwt": "node scripts/generate-jwt-secret.js",
     "migrate:up": "node scripts/run-migrations.js up",

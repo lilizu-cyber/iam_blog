@@ -69,6 +69,7 @@ jobs:
         DATABASE_URL: postgresql://postgres:postgres@localhost:5432/iam_blog_db
         JWT_SECRET: test-jwt-secret-key-for-testing-only-minimum-32-characters-long
         REDIS_URL: redis://localhost:6379
+        ADMIN_PASSWORD: ci-test-admin-password-min-32-chars
         NODE_ENV: test
       run: |
         npm run setup:db
@@ -130,7 +131,7 @@ jobs:
         JWT_SECRET: test-jwt-secret-key-for-testing-only-minimum-32-characters-long
         REDIS_URL: redis://localhost:6379
         ADMIN_USERNAME: admin
-        ADMIN_PASSWORD: Schlurfend.?.123
+        ADMIN_PASSWORD: ci-test-admin-password-min-32-chars
         FRONTEND_URL: http://localhost:3000
         CI: true
       run: npm run test:e2e

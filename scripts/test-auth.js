@@ -3,7 +3,7 @@ const http = require('http');
 
 const API_BASE = 'http://localhost:3001';
 const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'admin';
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'Schlurfend.?.123';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'local-test-admin-password';
 
 // Helper to make HTTP requests
 function makeRequest(method, path, data = null, cookies = '') {
