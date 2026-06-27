@@ -1,8 +1,9 @@
 import { useState } from 'react';
+import { resolveUploadUrl } from '../../utils/apiUrl';
 
 /**
  * OptimizedImage component with lazy loading, responsive images, and WebP support
- * 
+ *
  * @param {Object} props
  * @param {string|Object} props.src - Image source URL or optimization object
  * @param {string} props.alt - Alt text for the image
@@ -22,63 +23,54 @@ const OptimizedImage = ({
   aspectRatio,
   ...props
 }) => {
-  const [imageError, setImageError] = useState(false);
+  const [useFallbackSrc, setUseFallbackSrc] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [hasError, setHasError] = useState(false);
 
-  // Handle image source - can be a string URL or optimization object
-  const getImageUrl = () => {
+  const getPrimaryUrl = () => {
     if (typeof src === 'string') {
       return src;
     }
 
-    if (src && src.optimization) {
-      // Use optimized image if available
-      const optimization = src.optimization;
-      
-      // Try WebP first, then fallback
-      if (optimization.sizes && optimization.sizes[size]) {
-        return optimization.sizes[size];
-      }
-      
-      // Fallback to original
-      if (src.url) {
-        return src.url;
-      }
-    }
-
-    if (src && src.url) {
+    if (src?.url) {
       return src.url;
     }
 
+    if (src?.optimization?.sizes?.[size]) {
+      return src.optimization.sizes[size];
+    }
+
     return null;
   };
 
-  // Get srcset for responsive images
   const getSrcSet = () => {
-    if (typeof src === 'string' || !src?.optimization) {
+    if (useFallbackSrc || typeof src === 'string' || !src?.optimization?.srcset) {
       return null;
     }
 
-    const optimization = src.optimization;
-    
-    // Prefer WebP srcset
-    if (optimization.srcset?.webp) {
-      return optimization.srcset.webp;
-    }
-    
-    // Fallback to other formats
-    if (optimization.srcset?.jpg) {
-      return optimization.srcset.jpg;
-    }
-    
-    if (optimization.srcset?.png) {
-      return optimization.srcset.png;
+    // When a direct url exists, prefer it over srcset to avoid broken legacy variants.
+    if (src?.url) {
+      return null;
     }
 
-    return null;
+    const { srcset } = src.optimization;
+    const raw = srcset?.webp || srcset?.jpg || srcset?.png;
+
+    if (!raw) {
+      return null;
+    }
+
+    return raw
+      .split(',')
+      .map((entry) => {
+        const [url, descriptor] = entry.trim().split(/\s+/);
+        const resolved = resolveUploadUrl(url);
+        return descriptor ? `${resolved} ${descriptor}` : resolved;
+      })
+      .join(', ');
   };
 
-  const imageUrl = getImageUrl();
+  const imageUrl = getPrimaryUrl() ? resolveUploadUrl(getPrimaryUrl()) : null;
   const srcSet = getSrcSet();
 
   if (!imageUrl) {
@@ -87,32 +79,41 @@ const OptimizedImage = ({
 
   const handleLoad = () => {
     setIsLoaded(true);
+    setHasError(false);
   };
 
   const handleError = () => {
-    setImageError(true);
+    if (!useFallbackSrc && typeof src === 'object' && src?.url) {
+      setUseFallbackSrc(true);
+      setIsLoaded(false);
+      return;
+    }
+
+    setHasError(true);
+    setIsLoaded(true);
   };
+
+  const visibleClassName = `${className} ${
+    isLoaded || hasError ? 'opacity-100' : 'opacity-0'
+  } transition-opacity duration-300`;
 
   const imageProps = {
     alt,
-    className: `${className} ${isLoaded ? 'opacity-100' : 'opacity-0'} transition-opacity duration-300`,
+    className: visibleClassName,
     onLoad: handleLoad,
     onError: handleError,
     ...props,
   };
 
-  // Add lazy loading
   if (lazy) {
     imageProps.loading = 'lazy';
   }
 
-  // Add srcset for responsive images
   if (srcSet) {
     imageProps.srcSet = srcSet;
     imageProps.sizes = sizes;
   }
 
-  // Add aspect ratio container if specified
   if (aspectRatio) {
     const [width, height] = aspectRatio.split('/').map(Number);
     const paddingBottom = `${(height / width) * 100}%`;
@@ -122,10 +123,10 @@ const OptimizedImage = ({
         <img
           {...imageProps}
           src={imageUrl}
-          className={`${imageProps.className} absolute inset-0 h-full w-full object-cover`}
+          className={`${visibleClassName} absolute inset-0 h-full w-full object-cover`}
         />
-        {!isLoaded && !imageError && (
-          <div className="absolute inset-0 bg-gray-200 dark:bg-gray-700 animate-pulse" />
+        {!isLoaded && !hasError && (
+          <div className="absolute inset-0 animate-pulse bg-gray-200 dark:bg-gray-700" />
         )}
       </div>
     );
@@ -134,14 +135,11 @@ const OptimizedImage = ({
   return (
     <>
       <img {...imageProps} src={imageUrl} />
-      {!isLoaded && !imageError && (
-        <div className="absolute inset-0 bg-gray-200 dark:bg-gray-700 animate-pulse" />
+      {!isLoaded && !hasError && (
+        <div className="absolute inset-0 animate-pulse bg-gray-200 dark:bg-gray-700" />
       )}
     </>
   );
 };
 
 export default OptimizedImage;
-
-
-

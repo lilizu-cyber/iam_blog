@@ -38,6 +38,32 @@ const QUALITY = {
   png: 90,
 };
 
+function toPublicUploadPath(uploadPath) {
+  if (!uploadPath || typeof uploadPath !== 'string') {
+    return uploadPath;
+  }
+
+  if (uploadPath.startsWith('/uploads/')) {
+    return uploadPath.replace(
+      /^\/uploads\/images\/(?!optimized\/)([^/]+)\/(.+)$/,
+      '/uploads/images/optimized/$1/$2'
+    );
+  }
+
+  const uploadsRoot = `${path.sep}uploads${path.sep}`;
+  const uploadsIndex = uploadPath.indexOf(uploadsRoot);
+  if (uploadsIndex === -1) {
+    return uploadPath;
+  }
+
+  const relativePath = uploadPath
+    .slice(uploadsIndex)
+    .split(path.sep)
+    .join('/');
+
+  return toPublicUploadPath(relativePath);
+}
+
 /**
  * Optimize and resize an image, generating multiple sizes and formats
  * @param {string} inputPath - Path to the original image
@@ -116,7 +142,7 @@ async function optimizeImage(inputPath, outputDir, baseFilename) {
       const stats = fs.statSync(outputPath);
       webpSizes[sizeName] = {
         path: outputPath,
-        url: `/uploads/images/${path.basename(outputDir)}/${path.basename(outputPath)}`,
+        url: `/uploads/images/optimized/${baseFilename}/${path.basename(outputPath)}`,
         format: 'webp',
         width: dimensions.width,
         height: dimensions.height,
@@ -145,7 +171,7 @@ async function optimizeImage(inputPath, outputDir, baseFilename) {
         const stats = fs.statSync(outputPath);
         jpegSizes[sizeName] = {
           path: outputPath,
-          url: `/uploads/images/${path.basename(outputDir)}/${path.basename(outputPath)}`,
+          url: `/uploads/images/optimized/${baseFilename}/${path.basename(outputPath)}`,
           format: 'jpg',
           width: dimensions.width,
           height: dimensions.height,
@@ -169,7 +195,7 @@ async function optimizeImage(inputPath, outputDir, baseFilename) {
         const stats = fs.statSync(outputPath);
         pngSizes[sizeName] = {
           path: outputPath,
-          url: `/uploads/images/${path.basename(outputDir)}/${path.basename(outputPath)}`,
+          url: `/uploads/images/optimized/${baseFilename}/${path.basename(outputPath)}`,
           format: 'png',
           width: dimensions.width,
           height: dimensions.height,
@@ -208,9 +234,12 @@ function getImageUrl(imageData, size = 'medium', preferredFormat = 'webp') {
     return null;
   }
 
-  // If animated GIF, return original
+  // If animated GIF or Sharp unavailable, return the web path (not a filesystem path)
   if (imageData.optimized === false) {
-    return imageData.original.path;
+    if (imageData.original?.url) {
+      return toPublicUploadPath(imageData.original.url);
+    }
+    return toPublicUploadPath(imageData.original?.path);
   }
 
   // Try preferred format first, then fallback
@@ -218,12 +247,12 @@ function getImageUrl(imageData, size = 'medium', preferredFormat = 'webp') {
   
   for (const format of formats) {
     if (imageData.formats[format] && imageData.formats[format][size]) {
-      return imageData.formats[format][size].url;
+      return toPublicUploadPath(imageData.formats[format][size].url);
     }
   }
 
-  // Fallback to original if no optimized version found
-  return imageData.original.path;
+  // Fallback to original upload in /uploads/images/<filename>
+  return toPublicUploadPath(imageData.original?.path);
 }
 
 /**
@@ -241,16 +270,16 @@ function generateSrcSet(imageData, format = 'webp') {
   const srcsetParts = [];
 
   if (sizes.thumbnail) {
-    srcsetParts.push(`${sizes.thumbnail.url} ${sizes.thumbnail.width}w`);
+    srcsetParts.push(`${toPublicUploadPath(sizes.thumbnail.url)} ${sizes.thumbnail.width}w`);
   }
   if (sizes.small) {
-    srcsetParts.push(`${sizes.small.url} ${sizes.small.width}w`);
+    srcsetParts.push(`${toPublicUploadPath(sizes.small.url)} ${sizes.small.width}w`);
   }
   if (sizes.medium) {
-    srcsetParts.push(`${sizes.medium.url} ${sizes.medium.width}w`);
+    srcsetParts.push(`${toPublicUploadPath(sizes.medium.url)} ${sizes.medium.width}w`);
   }
   if (sizes.large) {
-    srcsetParts.push(`${sizes.large.url} ${sizes.large.width}w`);
+    srcsetParts.push(`${toPublicUploadPath(sizes.large.url)} ${sizes.large.width}w`);
   }
 
   return srcsetParts.join(', ');

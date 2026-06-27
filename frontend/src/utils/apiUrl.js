@@ -28,13 +28,28 @@ export function getUploadsBaseUrl() {
 }
 
 /**
+ * Fix legacy optimized image paths that omitted the "optimized" folder segment.
+ * e.g. /uploads/images/foo/foo-medium.webp -> /uploads/images/optimized/foo/foo-medium.webp
+ */
+export function normalizeUploadPath(path) {
+  if (!path || typeof path !== 'string') return path
+
+  return path.replace(
+    /^\/uploads\/images\/(?!optimized\/)([^/]+)\/(.+)$/,
+    '/uploads/images/optimized/$1/$2'
+  )
+}
+
+/**
  * Turn a stored upload path into a browser-loadable URL.
  */
 export function resolveUploadUrl(path) {
   if (!path || typeof path !== 'string') return path
   if (/^(https?:\/\/|blob:|data:)/i.test(path)) return path
 
-  const normalizedPath = path.startsWith('/') ? path : `/${path}`
+  const normalizedPath = normalizeUploadPath(
+    path.startsWith('/') ? path : `/${path}`
+  )
   const uploadsBase = getUploadsBaseUrl()
 
   return uploadsBase ? `${uploadsBase}${normalizedPath}` : normalizedPath

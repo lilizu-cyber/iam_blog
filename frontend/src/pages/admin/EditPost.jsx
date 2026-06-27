@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
 import AdminHeader from '../../components/Admin/AdminHeader'
+import FeaturedImagePicker from '../../components/Admin/FeaturedImagePicker'
 import { useQuery, useMutation, useQueryClient } from 'react-query'
 import toast from 'react-hot-toast'
 import { blogApi } from '../../services/api'
@@ -445,6 +446,22 @@ export default function EditPost() {
                   </div>
                 </div>
               </div>
+            </div>
+
+            <div className="card p-6">
+              <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                Featured Image
+              </h2>
+              <p className="mb-6 text-sm text-gray-500 dark:text-gray-400">
+                This image represents the post on listing cards, the article hero, and social previews.
+              </p>
+              <FeaturedImagePicker
+                value={formData.featuredImage}
+                alt={formData.title}
+                onChange={(featuredImage) =>
+                  setFormData((prev) => ({ ...prev, featuredImage }))
+                }
+              />
             </div>
 
             <div className="card p-6">
