@@ -15,15 +15,16 @@ A cybersecurity and Identity & Access Management (IAM) blog built with **CQRS**,
 7. [Database](#database)
 8. [Redis (Optional)](#redis-optional)
 9. [API](#api)
-10. [Admin Panel](#admin-panel)
-11. [Security](#security)
-12. [Scripts Reference](#scripts-reference)
-13. [Testing](#testing)
-14. [Docker](#docker)
-15. [Deployment Notes](#deployment-notes)
-16. [Backups](#backups)
-17. [Troubleshooting](#troubleshooting)
-18. [Extending the Application](#extending-the-application)
+10. [Authentication](#authentication)
+11. [Admin Panel](#admin-panel)
+12. [Security](#security)
+13. [Scripts Reference](#scripts-reference)
+14. [Testing](#testing)
+15. [Docker](#docker)
+16. [Deployment Notes](#deployment-notes)
+17. [Backups](#backups)
+18. [Troubleshooting](#troubleshooting)
+19. [Extending the Application](#extending-the-application)
 
 ---
 
@@ -233,6 +234,10 @@ Copy `env.example` to `.env`. Required and commonly used variables:
 | `REDIS_URL` | No | e.g. `redis://localhost:6379` — enables distributed rate limiting |
 | `OPENAI_API_KEY` | No | Required only for AI post generation |
 | `ADMIN_USERNAME` / `ADMIN_PASSWORD` / `ADMIN_EMAIL` | No | Used by `npm run create:admin` only |
+| `AUTH0_DOMAIN` | Prod | Auth0 tenant domain (backend validates tokens via `/userinfo`) |
+| `VITE_AUTH0_DOMAIN` | Prod | Same tenant; set on Vercel for the frontend build |
+| `VITE_AUTH0_CLIENT_ID` | Prod | Auth0 SPA application client ID |
+| `VITE_AUTH0_CALLBACK_URL` | No | Optional override (default: `{origin}/admin/login`) |
 | `SITE_AUTHOR_NAME` / `SITE_AUTHOR_EMAIL` | No | Public author byline (default: `Ilirijana Zuka`) |
 | `VITE_SITE_AUTHOR_NAME` | No | Frontend author name (Vercel); defaults to `Ilirijana Zuka` |
 | `VITE_GOOGLE_ADSENSE_CLIENT_ID` | No | AdSense client ID (`ca-pub-...`); required to show ads |
@@ -309,11 +314,12 @@ Interactive docs: **http://localhost:3001/api-docs** (OpenAPI JSON at `/api-docs
 
 ### Authentication
 
-Cookie-based JWT. Login via `POST /api/auth/login` sets an HTTP-only `adminToken` cookie.
+See [Authentication](#authentication) for the full admin login flow. Admin API routes expect an HTTP-only `adminToken` cookie.
 
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
-| POST | `/api/auth/login` | No | Admin login |
+| POST | `/api/auth/auth0/session` | Bearer (Auth0) | Exchange Auth0 access token for backend session |
+| POST | `/api/auth/login` | No | Legacy username/password login (scripts/tests) |
 | POST | `/api/auth/logout` | Yes | Logout |
 | GET | `/api/auth/me` | Yes | Current user |
 
@@ -361,6 +367,50 @@ Cookie-based JWT. Login via `POST /api/auth/login` sets an HTTP-only `adminToken
 
 ---
 
+## Authentication
+
+The public blog is anonymous. **Admin features only** (post editor, uploads, newsletter, contact inbox) require authentication.
+
+### How it works
+
+1. **Identity (Auth0)** — The admin UI uses the Auth0 SPA SDK. Users sign in with **GitHub** or **Google** via Auth0 (`/admin/login`).
+2. **Session sync** — After Auth0 login, the frontend calls `POST /api/auth/auth0/session` with the Auth0 access token.
+3. **Backend verification** — Express validates the token against Auth0’s `/userinfo` endpoint, then looks up a matching row in the `users` table (`email`, `role: admin`, `isActive: true`).
+4. **API session** — If allowed, the backend issues a signed JWT in an HTTP-only `adminToken` cookie. Admin routes and uploads use this cookie (`credentials: 'include'`).
+
+Auth0 proves *who* you are; the database decides *whether* you are an admin. A successful social login alone is not enough unless your email matches an active admin user.
+
+### Setup
+
+1. Create an Auth0 **Single Page Application** and enable GitHub/Google connections.
+2. Set callback, logout, and web origin URLs (localhost for dev; your Vercel domain for production).
+3. Add env vars — backend: `AUTH0_DOMAIN`; frontend (Vercel): `VITE_AUTH0_DOMAIN`, `VITE_AUTH0_CLIENT_ID`.
+4. Create an admin user whose **email matches your Auth0 login email**:
+
+```bash
+npm run create:admin
+```
+
+Set `ADMIN_EMAIL` in `.env` to the same email Auth0 returns (for GitHub, use the email GitHub shares with Auth0).
+
+### Local frontend Auth0 config
+
+Copy Auth0 settings into `frontend/.env` (see `env.example`):
+
+```
+VITE_AUTH0_DOMAIN=your-tenant.eu.auth0.com
+VITE_AUTH0_CLIENT_ID=your-spa-client-id
+VITE_AUTH0_CALLBACK_URL=http://localhost:3000/admin/login
+```
+
+### Notes
+
+- **Legacy login:** `POST /api/auth/login` (username/password) remains for local scripts and e2e tests; the admin UI uses Auth0 in production.
+- **Cross-origin cookies:** In production, the backend sets `adminToken` with `Secure` and `SameSite=None` so the Vercel frontend can call the Railway API.
+- **Password rotation:** `npm run reset:admin-password` updates the legacy DB password (API login only; does not change Auth0).
+
+---
+
 ## Admin Panel
 
 | URL | Purpose |
@@ -374,7 +424,7 @@ Cookie-based JWT. Login via `POST /api/auth/login` sets an HTTP-only `adminToken
 | `/admin/newsletter` | Subscribers |
 | `/admin/contact` | Contact messages |
 
-Create the first admin user with `npm run create:admin` (uses `ADMIN_*` vars in `.env`).
+Create the first admin user with `npm run create:admin` (uses `ADMIN_*` vars in `.env`). The admin email must match your Auth0 login email.
 
 ---
 
